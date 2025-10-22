@@ -2,12 +2,15 @@ import { Stack } from 'expo-router';
 
 export default function RootLayout() {
   return (
-    <Stack>
-      {/* Isso diz ao Expo Router:
-        1. A tela principal é 'app/index.tsx'.
-        2. Não mostre o título (header) nessa tela.
+    // Esta é a forma de dizer: "Aplique headerShown: false
+    // para TODAS as telas dentro desta Stack"
+    <Stack screenOptions={{ headerShown: false }}>
+
+      {/* Você ainda pode ter telas individuais aqui,
+          mas elas vão "herdar" a opção de cima. 
+          Deixar só a Stack já resolve.
       */}
-      <Stack.Screen name="index" options={{ headerShown: false }} />
+
     </Stack>
   );
 }
