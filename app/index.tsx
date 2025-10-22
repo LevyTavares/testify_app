@@ -16,7 +16,7 @@ export default function HomeScreen() {
       <View style={styles.headerContainer}>
         <Image 
           // MUDANÇA: O caminho para a imagem mudou
-          source={require('../../assets/testify-icon.png')} 
+          source={require('../assets/images/testify-icon.png')}
           style={styles.headerIcon}
         />
         <View style={styles.headerTextContainer}>
