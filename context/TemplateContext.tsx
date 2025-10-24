@@ -12,6 +12,7 @@ type ReportResult = {
   incorrect: number;
 };
 
+// "export" aqui permite que outras telas importem o tipo "Template"
 export type Template = {
   id: string;
   title: string;

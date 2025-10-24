@@ -1,12 +1,13 @@
 import { Stack } from 'expo-router';
-import { TemplateProvider } from '../context/TemplateContext'; // <-- Verifique esta linha
+// 1. Verifique se este import está correto
+import { TemplateProvider } from '../context/TemplateContext';
 
 export default function RootLayout() {
   return (
-    // Esta linha é a mais importante
+    // 2. Verifique se o <TemplateProvider> está "abraçando" a <Stack>
     <TemplateProvider>
       <Stack screenOptions={{ headerShown: false }}>
-        {/* O Stack fica DENTRO */}
+        {/* Todas as telas aqui dentro agora têm acesso ao "cérebro" */}
       </Stack>
     </TemplateProvider>
   );
