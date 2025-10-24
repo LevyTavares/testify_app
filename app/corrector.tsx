@@ -14,6 +14,7 @@ import {
   View,
 } from "react-native";
 import EmptyState from "../components/EmptyState"; // <--- O caminho está correto
+import { useTemplates } from "../context/TemplateContext"; // usar apenas o hook, manter tipo local
 
 // Definimos o tipo de um Template
 type Template = {
@@ -42,7 +43,7 @@ export default function CorrectorScreen() {
   const [studentTurma, setStudentTurma] = useState("");
 
   // MUDANÇA: Dados simulados, já que ainda não temos o Contexto
-  const [templates, setTemplates] = useState<Template[]>([]); // Começa vazio
+  const { templates, handleAddReport } = useTemplates(); // fazemos uso do Contexto
 
   // Efeito do processamento - Copiado do CorrectorScreen.js
   useEffect(() => {
@@ -66,14 +67,18 @@ export default function CorrectorScreen() {
       alert("Por favor, insira pelo menos o nome do aluno.");
       return false;
     }
-    // A lógica de "onAddReport" será movida para o Contexto depois
-    console.log("Salvando Relatório:", {
-      templateId: selectedTemplate?.id,
-      studentName,
-      studentMatricula,
-      studentTurma,
-      ...correctionResult,
-    });
+
+    // MUDANÇA IMPORTANTE
+    if (selectedTemplate) {
+      handleAddReport(
+        selectedTemplate,
+        correctionResult,
+        studentName,
+        studentMatricula,
+        studentTurma
+      );
+    }
+
     setStudentName("");
     setStudentMatricula("");
     setStudentTurma("");

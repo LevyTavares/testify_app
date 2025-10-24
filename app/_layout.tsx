@@ -1,16 +1,16 @@
 import { Stack } from 'expo-router';
+// 1. Importe o Provedor que você acabou de criar
+import { TemplateProvider } from '../context/TemplateContext';
 
 export default function RootLayout() {
   return (
-    // Esta é a forma de dizer: "Aplique headerShown: false
-    // para TODAS as telas dentro desta Stack"
-    <Stack screenOptions={{ headerShown: false }}>
-
-      {/* Você ainda pode ter telas individuais aqui,
-          mas elas vão "herdar" a opção de cima. 
-          Deixar só a Stack já resolve.
-      */}
-
-    </Stack>
+    // 2. Envolva todo o aplicativo com o "TemplateProvider"
+    <TemplateProvider>
+      <Stack screenOptions={{ headerShown: false }}>
+        {/* Agora, todas as telas (Stack screens)
+          têm acesso aos dados (templates)
+        */}
+      </Stack>
+    </TemplateProvider>
   );
 }
