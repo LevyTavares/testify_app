@@ -1,33 +1,50 @@
 import { Stack } from 'expo-router';
-import { TemplateProvider } from '../context/TemplateContext';
-// 1. Importe o React, useState, useEffect
-import React, { useState, useEffect } from 'react';
-// 2. Importe o seu componente de Splash
-import SplashScreen from '../components/SplashScreen';
+// Importamos o Provider E o Hook do nosso contexto
+import { TemplateProvider, useTemplates } from '../context/TemplateContext';
+import React from 'react';
+// Importamos os componentes para mostrar o loading
+import { ActivityIndicator, View, StyleSheet } from 'react-native';
 
-export default function RootLayout() {
-  // 3. Adicione o estado de "loading"
-  // Exatamente como seu App.js original
-  const [isLoading, setIsLoading] = useState(true);
+// Criamos um componente interno que pode usar o hook useTemplates()
+// porque ele será renderizado DENTRO do TemplateProvider
+function AppLayout() {
+  // Pegamos o estado isLoading do nosso contexto
+  const { isLoading } = useTemplates();
 
-  // 4. Adicione o timer de 2.5 segundos
-  // Exatamente como seu App.js original
-  useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 2500); //
-    return () => clearTimeout(timer);
-  }, []);
-
-  // 5. Se estiver carregando (loading), mostre a SplashScreen
+  // Se o contexto ainda está carregando os dados do SQLite...
   if (isLoading) {
-    return <SplashScreen />; //
+    // ...mostramos um indicador de atividade (spinner)
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#346a74" />
+      </View>
+    );
   }
 
-  // 6. Se não estiver carregando, mostre o app
+  // Se isLoading for false, o DB carregou, então mostramos o app principal
+  return (
+    <Stack screenOptions={{ headerShown: false }}>
+      {/* Aqui o Expo Router vai renderizar as telas (index, createTemplate, etc.) */}
+    </Stack>
+  );
+}
+
+// O layout principal agora só precisa envolver tudo com o Provider
+// O AppLayout será renderizado como filho do Provider
+export default function RootLayout() {
   return (
     <TemplateProvider>
-      <Stack screenOptions={{ headerShown: false }}>
-        {/* O app principal */}
-      </Stack>
+      <AppLayout />
     </TemplateProvider>
   );
 }
+
+// Estilos simples para centralizar o spinner de loading
+const styles = StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f0f8f8', // Mesma cor de fundo do app
+  },
+});
