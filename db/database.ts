@@ -21,15 +21,20 @@ export type Template = {
   results: ReportResult[];
 };
 
-// Abre ou cria o banco de dados 'testify.db'
-const db = SQLite.openDatabaseSync("testify.db");
-
-// --- Funções de Inicialização ---
+// Abre ou cria o banco de dados 'testify.db' (lazy e assíncrono para Web)
+let dbPromise: Promise<any> | null = null;
+const getDb = async () => {
+  if (!dbPromise) {
+    dbPromise = SQLite.openDatabaseAsync("testify.db");
+  }
+  return await dbPromise;
+};
 
 // Função para criar as tabelas se elas não existirem
 export const initDB = () => {
   const promise = new Promise<void>(async (resolve, reject) => {
     try {
+      const db = await getDb();
       await db.withTransactionAsync(async () => {
         await db.execAsync(`
           CREATE TABLE IF NOT EXISTS templates (
@@ -69,6 +74,7 @@ export const initDB = () => {
 export const addTemplateDB = (template: Template) => {
   const promise = new Promise<any>(async (resolve, reject) => {
     try {
+      const db = await getDb();
       await db.withTransactionAsync(async () => {
         await db.runAsync(
           `INSERT INTO templates (id, title, date, numQuestoes, correctAnswers) VALUES (?, ?, ?, ?, ?);`,
@@ -95,6 +101,7 @@ export const getTemplatesDB = () => {
   const promise = new Promise<Template[]>(async (resolve, reject) => {
     try {
       const templates: Template[] = [];
+      const db = await getDb();
       // Usamos transação para poder usar await nas consultas SQL internas
       await db.withTransactionAsync(async () => {
         // 1. Busca todos os templates, ordenados pelos mais recentes
@@ -144,6 +151,7 @@ export const addReportDB = (
 ) => {
   const promise = new Promise<any>(async (resolve, reject) => {
     try {
+      const db = await getDb();
       await db.withTransactionAsync(async () => {
         await db.runAsync(
           `INSERT INTO results (id, templateId, studentName, studentMatricula, studentTurma, score, correct, incorrect)
