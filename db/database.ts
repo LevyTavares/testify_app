@@ -80,13 +80,13 @@ export const getTemplatesDB = async () => {
   };
   type ResultRow = ReportResult;
 
-  const templateRows = await db.getAllAsync<TemplateRow>(
+  const templateRows: TemplateRow[] = await db.getAllAsync(
     "SELECT id, title, date, numQuestoes, correctAnswers FROM templates ORDER BY date DESC;",
     []
   );
 
   for (const templateRow of templateRows) {
-    const resultRows = await db.getAllAsync<ResultRow>(
+    const resultRows: ResultRow[] = await db.getAllAsync(
       "SELECT id, templateId, studentName, studentMatricula, studentTurma, score, correct, incorrect FROM results WHERE templateId = $id ORDER BY studentName ASC;",
       { $id: templateRow.id }
     );
