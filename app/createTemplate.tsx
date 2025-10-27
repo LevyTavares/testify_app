@@ -153,6 +153,9 @@ export default function CreateTemplateScreen() {
       }
 
       const imageBlob = await response.blob();
+      console.log("Blob de imagem recebido do backend:", imageBlob);
+      console.log("Tipo do blob:", imageBlob.type);]
+      console.log("Tamanho do blob (bytes):", imageBlob.size);
       const reader = new FileReader();
       reader.readAsDataURL(imageBlob);
       reader.onloadend = () => {
