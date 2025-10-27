@@ -3,5 +3,7 @@
     "source.fixAll": "explicit",
     "source.organizeImports": "explicit",
     "source.sortMembers": "explicit"
-  }
+  },
+  // Evita erro de schema 429 ao validar app.json (VS Code tentando baixar schema do GitHub)
+  "json.schemaDownload.enable": false
 }
