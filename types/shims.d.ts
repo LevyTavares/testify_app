@@ -3,3 +3,4 @@
 // If your editor still complains, ensure node_modules are installed and TypeScript picks them up.
 declare module "react-native";
 declare module "expo-sqlite";
+declare module "expo-sharing";

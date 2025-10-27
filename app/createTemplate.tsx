@@ -24,6 +24,7 @@ import type { Template } from "../db/database";
 // para ter acesso a cacheDirectory, writeAsStringAsync e EncodingType
 import * as FileSystem from "expo-file-system/legacy";
 import * as MediaLibrary from "expo-media-library";
+import * as Sharing from "expo-sharing";
 // ----------------------------
 
 // Constantes copiadas do original
@@ -217,14 +218,14 @@ export default function CreateTemplateScreen() {
     }
 
     try {
-      // 1. Pede permissão para acessar a galeria
-      const { status } = await MediaLibrary.requestPermissionsAsync();
-      if (status !== "granted") {
-        Alert.alert(
-          "Permissão Necessária",
-          "Precisamos de permissão para salvar a imagem na sua galeria."
-        );
-        return;
+      // 1. Pede permissão para acessar a galeria (parâmetro boolean: writeOnly)
+      let mediaGranted = false;
+      try {
+        const perm = await MediaLibrary.requestPermissionsAsync(true);
+        mediaGranted = perm.status === "granted";
+      } catch (permErr) {
+        console.warn("Falha ao solicitar permissão da MediaLibrary:", permErr);
+        mediaGranted = false;
       }
 
       // 2. Extrai os dados base64
@@ -245,25 +246,47 @@ export default function CreateTemplateScreen() {
       });
       console.log("Imagem salva temporariamente em:", fileUri);
 
-      // 5. Cria o asset na galeria a partir do arquivo temporário
-      const asset = await MediaLibrary.createAssetAsync(fileUri);
-      console.log("Asset criado na galeria:", asset.uri); // Loga a URI final na galeria
+      if (mediaGranted) {
+        // 5. Cria o asset na galeria a partir do arquivo temporário
+        const asset = await MediaLibrary.createAssetAsync(fileUri);
+        console.log("Asset criado na galeria:", asset.uri);
 
-      // 6. (Opcional, mas boa prática) Tenta criar um álbum ou usar um existente
-      const albumName = "Testify Gabaritos";
-      let album = await MediaLibrary.getAlbumAsync(albumName);
-      if (album === null) {
-        // Cria o álbum se não existir (apenas no Android isso pode precisar de confirmação extra às vezes)
-        await MediaLibrary.createAlbumAsync(albumName, asset, false); // false = não copiar
+        // 6. Tenta criar/usar álbum
+        const albumName = "Testify Gabaritos";
+        let album = await MediaLibrary.getAlbumAsync(albumName);
+        if (album === null) {
+          await MediaLibrary.createAlbumAsync(albumName, asset, false);
+        } else {
+          await MediaLibrary.addAssetsToAlbumAsync([asset], album, false);
+        }
+
+        Alert.alert(
+          "Sucesso!",
+          `Gabarito "${tituloProva}" salvo no álbum "Testify Gabaritos" da sua galeria.`
+        );
       } else {
-        // Adiciona o asset ao álbum existente
-        await MediaLibrary.addAssetsToAlbumAsync([asset], album, false); // false = não copiar
+        // Fallback: compartilhar quando a MediaLibrary não está disponível ou sem permissão
+        let canShare = false;
+        let SharingMod: any = null;
+        try {
+          SharingMod = await import("expo-sharing");
+          canShare = await SharingMod.isAvailableAsync();
+        } catch (e) {
+          canShare = false;
+        }
+        if (canShare && SharingMod) {
+          await SharingMod.shareAsync(fileUri, {
+            mimeType: "image/png",
+            dialogTitle: `Salvar/Compartilhar Gabarito "${tituloProva}"`,
+            UTI: "public.png",
+          });
+        } else {
+          Alert.alert(
+            "Ação necessária",
+            "Não foi possível acessar a galeria neste ambiente. Gere um Development Build (EAS) ou use o botão de compartilhar."
+          );
+        }
       }
-
-      Alert.alert(
-        "Sucesso!",
-        `Gabarito "${tituloProva}" salvo no álbum "${albumName}" da sua galeria.`
-      );
 
       // 7. Limpa o arquivo temporário APÓS garantir que foi salvo na galeria
       // Envolvemos em try/catch caso a exclusão falhe (não crítico)
