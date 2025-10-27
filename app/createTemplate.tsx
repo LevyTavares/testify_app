@@ -160,7 +160,7 @@ export default function CreateTemplateScreen() {
       reader.readAsDataURL(imageBlob);
       reader.onloadend = () => {
         const base64data = reader.result as string;
-        console.log("Imagem recebida e convertida para base64 URI.");
+        console.log('Base64 gerado (início):', base64data.substring(0, 50)); // Log parcial
         setGeneratedGabaritoUri(base64data);
       };
       reader.onerror = (error) => {
