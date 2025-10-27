@@ -10,7 +10,8 @@ import {
   SafeAreaView,
   StatusBar,
   Platform,
-  ActivityIndicator, // Import ActivityIndicator
+  ActivityIndicator,
+  Alert, // <--- Import Alert
 } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
@@ -18,35 +19,37 @@ import { useRouter } from "expo-router";
 // Importa o hook para usar o "cérebro" (Contexto) e o tipo Template do DB
 import { useTemplates } from "../context/TemplateContext";
 import type { Template } from "../db/database";
+// --- IMPORTS PARA DOWNLOAD ---
+// Usamos a API "legacy" do expo-file-system (SDK 54+)
+// para ter acesso a cacheDirectory, writeAsStringAsync e EncodingType
+import * as FileSystem from "expo-file-system/legacy";
+import * as MediaLibrary from "expo-media-library";
+// ----------------------------
 
 // Constantes copiadas do original
-// A URL simulada não será mais usada se o fetch funcionar, mas mantemos como fallback visual
-const GABARITO_SIMULADO_URL = "https://i.imgur.com/g0n8h3b.png";
+const GABARITO_SIMULADO_URL = "https://i.imgur.com/g0n8h3b.png"; // Fallback visual
 const CHOICES = ["A", "B", "C", "D", "E"];
 
 export default function CreateTemplateScreen() {
   const router = useRouter();
-  // Puxa a função para adicionar gabarito do "cérebro"
   const { handleAddTemplate } = useTemplates();
 
-  // Estados locais copiados do original
+  // Estados locais
   const [step, setStep] = useState(1);
   const [tituloProva, setTituloProva] = useState("");
   const [numQuestoes, setNumQuestoes] = useState("");
   const [correctAnswers, setCorrectAnswers] = useState<{
     [key: number]: string | null;
   }>({});
-
-  // Novos estados para lidar com a imagem do backend
   const [generatedGabaritoUri, setGeneratedGabaritoUri] = useState<
     string | null
-  >(null); // Guarda a URI (base64) da imagem
-  const [isGeneratingImage, setIsGeneratingImage] = useState(false); // Flag de loading
+  >(null);
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
 
   // --- FUNÇÕES ---
 
-  // handleNextStep: Lógica idêntica ao original
   const handleNextStep = () => {
+    // ... (código idêntico)
     if (!tituloProva || !numQuestoes || parseInt(numQuestoes, 10) <= 0) {
       alert("Por favor, preencha todos os campos com valores válidos.");
       return;
@@ -59,27 +62,26 @@ export default function CreateTemplateScreen() {
     setStep(2);
   };
 
-  // handleSelectAnswer: Lógica idêntica ao original
   const handleSelectAnswer = (questionNumber: number, answer: string) => {
+    // ... (código idêntico)
     setCorrectAnswers((prevAnswers) => ({
       ...prevAnswers,
       [questionNumber]: answer,
     }));
   };
 
-  // handleReset: Lógica idêntica ao original
   const handleReset = () => {
+    // ... (código idêntico)
     setTituloProva("");
     setNumQuestoes("");
     setCorrectAnswers({});
-    setGeneratedGabaritoUri(null); // Limpa a imagem gerada
-    setIsGeneratingImage(false); // Reseta o loading
+    setGeneratedGabaritoUri(null);
+    setIsGeneratingImage(false);
     setStep(1);
   };
 
-  // handleSaveTemplate: MODIFICADA para chamar o backend
   const handleSaveTemplate = async () => {
-    // Função agora é async
+    // ... (código idêntico para validação, salvar no DB e chamar o backend)
     const allAnswered = Object.values(correctAnswers).every(
       (ans) => ans !== null
     );
@@ -92,11 +94,8 @@ export default function CreateTemplateScreen() {
       .sort((a, b) => parseInt(a) - parseInt(b))
       .map((key) => correctAnswers[parseInt(key, 10)]!);
 
-    // --- PARTE 1: Salvar no SQLite (Opcional antes de chamar API) ---
-    // Geramos o ID aqui para usar no DB e na imagem
     const templateId = Date.now().toString();
     const newTemplateData: Omit<Template, "results"> = {
-      // Usamos Omit para criar sem results
       id: templateId,
       title: tituloProva,
       date: new Date().toLocaleDateString("pt-BR"),
@@ -105,7 +104,6 @@ export default function CreateTemplateScreen() {
     };
 
     try {
-      // Chamamos a função do contexto para salvar no SQLite
       await handleAddTemplate(
         newTemplateData.title,
         newTemplateData.numQuestoes.toString(),
@@ -115,17 +113,15 @@ export default function CreateTemplateScreen() {
     } catch (error) {
       console.error("Erro ao salvar template no DB local:", error);
       alert("Erro ao salvar gabarito localmente.");
-      return; // Não prossegue se o salvamento local falhar
+      return;
     }
 
-    // --- PARTE 2: Chamar o Backend para Gerar a Imagem ---
-    setIsGeneratingImage(true); // Mostra o "carregando"
-    setGeneratedGabaritoUri(null); // Limpa imagem anterior
-    setStep(3); // VAI PARA A TELA DE "GABARITO SALVO" IMEDIATAMENTE (com loading)
+    setIsGeneratingImage(true);
+    setGeneratedGabaritoUri(null);
+    setStep(3);
 
     try {
-      // !!! ATENÇÃO: Substitua pelo IP REAL do seu PC e a PORTA (8000) !!!
-      const backendUrl = "http://192.168.0.8:8000/generate_gabarito"; // <--- SEU IP AQUI
+      const backendUrl = "http://192.168.0.8:8000/generate_gabarito"; // SEU IP
 
       console.log(`Chamando backend em ${backendUrl} com dados:`, {
         tituloProva,
@@ -156,14 +152,13 @@ export default function CreateTemplateScreen() {
         throw new Error(`Erro do servidor (${response.status}): ${errorBody}`);
       }
 
-      // Converte a imagem recebida (blob) em uma URI de dados (base64)
       const imageBlob = await response.blob();
       const reader = new FileReader();
       reader.readAsDataURL(imageBlob);
       reader.onloadend = () => {
         const base64data = reader.result as string;
         console.log("Imagem recebida e convertida para base64 URI.");
-        setGeneratedGabaritoUri(base64data); // Guarda a URI base64
+        setGeneratedGabaritoUri(base64data);
       };
       reader.onerror = (error) => {
         console.error("Erro ao converter blob para base64:", error);
@@ -172,11 +167,98 @@ export default function CreateTemplateScreen() {
     } catch (error) {
       console.error("Erro ao gerar imagem do gabarito:", error);
       alert(`Erro ao conectar com o servidor para gerar a imagem: ${error}`);
-      setGeneratedGabaritoUri(null); // Garante que nenhuma imagem antiga seja mostrada
+      setGeneratedGabaritoUri(null);
     } finally {
-      setIsGeneratingImage(false); // Esconde o "carregando"
+      setIsGeneratingImage(false);
     }
   };
+
+  // --- NOVA FUNÇÃO DE DOWNLOAD ---
+  const handleDownloadImage = async () => {
+    if (!generatedGabaritoUri) {
+      Alert.alert(
+        "Erro",
+        "Nenhuma imagem de gabarito disponível para download."
+      );
+      return;
+    }
+
+    // Verifica se é uma URI base64
+    if (!generatedGabaritoUri.startsWith("data:image/png;base64,")) {
+      Alert.alert(
+        "Erro",
+        "Formato de imagem inválido para download (não é base64)."
+      );
+      console.error("URI não é base64:", generatedGabaritoUri);
+      return;
+    }
+
+    try {
+      // 1. Pede permissão para acessar a galeria
+      const { status } = await MediaLibrary.requestPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert(
+          "Permissão Necessária",
+          "Precisamos de permissão para salvar a imagem na sua galeria."
+        );
+        return;
+      }
+
+      // 2. Extrai os dados base64
+      const base64Code = generatedGabaritoUri.split(
+        "data:image/png;base64,"
+      )[1];
+
+      // 3. Define nome e caminho temporário
+      const filename = `gabarito_${
+        tituloProva.replace(/[^a-zA-Z0-9_-]/g, "_") || Date.now()
+      }.png`;
+      // Usamos cacheDirectory que é limpo pelo sistema operacional eventualmente
+      const fileUri = FileSystem.cacheDirectory + filename;
+
+      // 4. Salva a string base64 como arquivo binário temporário
+      await FileSystem.writeAsStringAsync(fileUri, base64Code, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+      console.log("Imagem salva temporariamente em:", fileUri);
+
+      // 5. Cria o asset na galeria a partir do arquivo temporário
+      const asset = await MediaLibrary.createAssetAsync(fileUri);
+      console.log("Asset criado na galeria:", asset.uri); // Loga a URI final na galeria
+
+      // 6. (Opcional, mas boa prática) Tenta criar um álbum ou usar um existente
+      const albumName = "Testify Gabaritos";
+      let album = await MediaLibrary.getAlbumAsync(albumName);
+      if (album === null) {
+        // Cria o álbum se não existir (apenas no Android isso pode precisar de confirmação extra às vezes)
+        await MediaLibrary.createAlbumAsync(albumName, asset, false); // false = não copiar
+      } else {
+        // Adiciona o asset ao álbum existente
+        await MediaLibrary.addAssetsToAlbumAsync([asset], album, false); // false = não copiar
+      }
+
+      Alert.alert(
+        "Sucesso!",
+        `Gabarito "${tituloProva}" salvo no álbum "${albumName}" da sua galeria.`
+      );
+
+      // 7. Limpa o arquivo temporário APÓS garantir que foi salvo na galeria
+      // Envolvemos em try/catch caso a exclusão falhe (não crítico)
+      try {
+        await FileSystem.deleteAsync(fileUri, { idempotent: true }); // idempotent: não dá erro se já não existir
+        console.log("Arquivo temporário excluído:", fileUri);
+      } catch (deleteError) {
+        console.warn(
+          "Não foi possível excluir o arquivo temporário:",
+          deleteError
+        );
+      }
+    } catch (error) {
+      console.error("Erro detalhado ao salvar imagem:", error);
+      Alert.alert("Erro", "Não foi possível salvar a imagem na galeria.");
+    }
+  };
+  // --- FIM DA FUNÇÃO DE DOWNLOAD ---
 
   // --- RENDERIZAÇÃO (JSX) ---
 
@@ -250,17 +332,28 @@ export default function CreateTemplateScreen() {
               </View>
             )}
 
-            {/* Botões */}
+            {/* --- BOTÃO DE DOWNLOAD MODIFICADO --- */}
             <TouchableOpacity
               style={[styles.secondaryButton, { marginTop: 20 }]}
-              onPress={() =>
-                alert("Download ainda não implementado com backend.")
-              }
+              // Chama a nova função de download
+              onPress={handleDownloadImage}
+              // Desabilita se não houver imagem ou se estiver carregando
+              disabled={!generatedGabaritoUri || isGeneratingImage}
             >
-              <Text style={styles.secondaryButtonText}>
+              <Text
+                style={[
+                  styles.secondaryButtonText,
+                  // Adiciona opacidade se desabilitado
+                  (!generatedGabaritoUri || isGeneratingImage) && {
+                    opacity: 0.5,
+                  },
+                ]}
+              >
                 Baixar Gabarito (PNG)
               </Text>
             </TouchableOpacity>
+            {/* --- FIM DA MODIFICAÇÃO DO BOTÃO --- */}
+
             <TouchableOpacity
               style={styles.secondaryButton}
               onPress={() => router.push("/corrector")}
@@ -277,7 +370,7 @@ export default function CreateTemplateScreen() {
   }
 
   // --- PASSO 2: DEFINIR RESPOSTAS ---
-  // (JSX idêntico ao original/migrado anteriormente)
+  // (JSX idêntico)
   if (step === 2) {
     return (
       <SafeAreaView style={styles.container}>
@@ -356,7 +449,7 @@ export default function CreateTemplateScreen() {
   }
 
   // --- PASSO 1: DETALHES (Default) ---
-  // (JSX idêntico ao original/migrado anteriormente)
+  // (JSX idêntico)
   if (step === 1) {
     return (
       <SafeAreaView style={styles.container}>
@@ -387,13 +480,12 @@ export default function CreateTemplateScreen() {
               <Text style={styles.formHeaderTitle}>Detalhes da Avaliação</Text>
             </View>
             <View style={styles.inputContainer}>
-              <View style={styles.inputIcon}>
-                <MaterialCommunityIcons
-                  name="format-title"
-                  size={22}
-                  color="#999"
-                />
-              </View>
+              <MaterialCommunityIcons
+                name="format-title"
+                size={22}
+                color="#999"
+                style={styles.inputIcon} // Aplicado estilo diretamente aqui
+              />
               <TextInput
                 style={styles.input}
                 placeholder="Título da Prova"
@@ -403,9 +495,12 @@ export default function CreateTemplateScreen() {
               />
             </View>
             <View style={styles.inputContainer}>
-              <View style={styles.inputIcon}>
-                <MaterialCommunityIcons name="pound" size={22} color="#999" />
-              </View>
+              <MaterialCommunityIcons
+                name="pound"
+                size={22}
+                color="#999"
+                style={styles.inputIcon}
+              />
               <TextInput
                 style={styles.input}
                 placeholder="Número de Questões"
@@ -436,7 +531,7 @@ export default function CreateTemplateScreen() {
 } // Fim do componente CreateTemplateScreen
 
 // --- ESTILOS ---
-// Inclui os estilos originais + os novos para a imagem
+// (Estilos idênticos aos anteriores, incluindo os de placeholder/loading/error)
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#f0f8f8" },
   scrollContent: { padding: 20, alignItems: "center", paddingBottom: 40 },
@@ -557,12 +652,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
     color: "#333",
-    width: 40,
+    width: 40, // Largura fixa para alinhar
   },
   choicesContainer: {
     flexDirection: "row",
-    justifyContent: "space-around",
-    flex: 1,
+    justifyContent: "space-around", // Espaça igualmente
+    flex: 1, // Ocupa o espaço restante
   },
   choiceButton: {
     width: 40,
@@ -586,7 +681,6 @@ const styles = StyleSheet.create({
   choiceButtonTextSelected: {
     color: "#fff",
   },
-  // NOVOS ESTILOS ADICIONADOS
   imagePlaceholder: {
     width: "100%",
     aspectRatio: 1 / Math.sqrt(2),
