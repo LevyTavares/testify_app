@@ -152,15 +152,31 @@ export default function CreateTemplateScreen() {
         throw new Error(`Erro do servidor (${response.status}): ${errorBody}`);
       }
 
-      const imageBlob = await response.blob();
-      console.log("Blob de imagem recebido do backend:", imageBlob);
-      console.log("Tipo do blob:", imageBlob.type);
-      console.log("Tamanho do blob (bytes):", imageBlob.size);
+      // Em alguns ambientes (Android/Expo), response.blob() pode perder o MIME type
+      // e gerar "application/octet-stream" no data URL. Para garantir PNG, forçamos o type
+      // usando o header retornado pelo backend (image/png) e convertendo via ArrayBuffer.
+      const contentType = response.headers.get("content-type") || "image/png";
+      const arrayBuffer = await response.arrayBuffer();
+      const fixedBlob = new Blob([new Uint8Array(arrayBuffer)], {
+        type: contentType,
+      });
+
+      console.log("Blob de imagem recebido do backend:", fixedBlob);
+      console.log("Tipo do blob:", (fixedBlob as any).type);
+      console.log("Tamanho do blob (bytes):", fixedBlob.size);
+
       const reader = new FileReader();
-      reader.readAsDataURL(imageBlob);
+      reader.readAsDataURL(fixedBlob);
       reader.onloadend = () => {
-        const base64data = reader.result as string;
-        console.log('Base64 gerado (início):', base64data.substring(0, 50)); // Log parcial
+        let base64data = reader.result as string;
+        // Normaliza para PNG caso o polyfill tenha usado application/octet-stream
+        if (base64data.startsWith("data:application/octet-stream;base64,")) {
+          base64data = base64data.replace(
+            "data:application/octet-stream;base64,",
+            "data:image/png;base64,"
+          );
+        }
+        console.log("Base64 gerado (início):", base64data.substring(0, 50));
         setGeneratedGabaritoUri(base64data);
       };
       reader.onerror = (error) => {
@@ -186,14 +202,23 @@ export default function CreateTemplateScreen() {
       return;
     }
 
-    // Verifica se é uma URI base64
-    if (!generatedGabaritoUri.startsWith("data:image/png;base64,")) {
+    // Verifica/normaliza URI base64: aceita image/* ou application/octet-stream e corrige para PNG
+    let uriForSave = generatedGabaritoUri;
+    const isDataUrl = uriForSave.startsWith("data:");
+    const hasBase64 = uriForSave.includes(";base64,");
+    if (!isDataUrl || !hasBase64) {
       Alert.alert(
         "Erro",
         "Formato de imagem inválido para download (não é base64)."
       );
       console.error("URI não é base64:", generatedGabaritoUri);
       return;
+    }
+    if (uriForSave.startsWith("data:application/octet-stream;base64,")) {
+      uriForSave = uriForSave.replace(
+        "data:application/octet-stream;base64,",
+        "data:image/png;base64,"
+      );
     }
 
     try {
@@ -208,9 +233,9 @@ export default function CreateTemplateScreen() {
       }
 
       // 2. Extrai os dados base64
-      const base64Code = generatedGabaritoUri.split(
-        "data:image/png;base64,"
-      )[1];
+      // Sempre extraímos após 'base64,' independentemente do mime
+      const base64Index = uriForSave.indexOf("base64,");
+      const base64Code = uriForSave.slice(base64Index + "base64,".length);
 
       // 3. Define nome e caminho temporário
       const filename = `gabarito_${
