@@ -251,19 +251,32 @@ export default function CreateTemplateScreen() {
         const asset = await MediaLibrary.createAssetAsync(fileUri);
         console.log("Asset criado na galeria:", asset.uri);
 
-        // 6. Tenta criar/usar álbum
-        const albumName = "Testify Gabaritos";
-        let album = await MediaLibrary.getAlbumAsync(albumName);
-        if (album === null) {
-          await MediaLibrary.createAlbumAsync(albumName, asset, false);
-        } else {
-          await MediaLibrary.addAssetsToAlbumAsync([asset], album, false);
+        // 6. Tenta criar/usar álbum (somente se tivermos permissão de leitura também)
+        let albumMsg = `Gabarito "${tituloProva}" salvo na sua galeria.`;
+        try {
+          const readPerm = await MediaLibrary.getPermissionsAsync();
+          if (readPerm.status === "granted") {
+            const albumName = "Testify Gabaritos";
+            let album = await MediaLibrary.getAlbumAsync(albumName);
+            if (album === null) {
+              await MediaLibrary.createAlbumAsync(albumName, asset, false);
+            } else {
+              await MediaLibrary.addAssetsToAlbumAsync([asset], album, false);
+            }
+            albumMsg = `Gabarito "${tituloProva}" salvo no álbum "Testify Gabaritos" da sua galeria.`;
+          } else {
+            console.warn(
+              "Permissão de leitura da MediaLibrary não concedida; pulando organização em álbum."
+            );
+          }
+        } catch (albumErr) {
+          console.warn(
+            "Não foi possível organizar no álbum (provável limitação do Expo Go):",
+            albumErr
+          );
         }
 
-        Alert.alert(
-          "Sucesso!",
-          `Gabarito "${tituloProva}" salvo no álbum "Testify Gabaritos" da sua galeria.`
-        );
+        Alert.alert("Sucesso!", albumMsg);
       } else {
         // Fallback: compartilhar quando a MediaLibrary não está disponível ou sem permissão
         let canShare = false;
