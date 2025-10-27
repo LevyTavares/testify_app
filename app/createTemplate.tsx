@@ -152,21 +152,16 @@ export default function CreateTemplateScreen() {
         throw new Error(`Erro do servidor (${response.status}): ${errorBody}`);
       }
 
-      // Em alguns ambientes (Android/Expo), response.blob() pode perder o MIME type
-      // e gerar "application/octet-stream" no data URL. Para garantir PNG, forçamos o type
-      // usando o header retornado pelo backend (image/png) e convertendo via ArrayBuffer.
-      const contentType = response.headers.get("content-type") || "image/png";
-      const arrayBuffer = await response.arrayBuffer();
-      const fixedBlob = new Blob([new Uint8Array(arrayBuffer)], {
-        type: contentType,
-      });
-
-      console.log("Blob de imagem recebido do backend:", fixedBlob);
-      console.log("Tipo do blob:", (fixedBlob as any).type);
-      console.log("Tamanho do blob (bytes):", fixedBlob.size);
+      // Em alguns ambientes (Android/Expo), response.blob() pode vir sem o MIME correto
+      // e gerar "application/octet-stream" no data URL. Vamos converter e normalizar depois.
+      const imageBlob = await response.blob();
+      console.log("Blob de imagem recebido do backend:", imageBlob);
+      // Alguns polyfills não expõem .type; esse log pode vir vazio em Android/Expo
+      console.log("Tipo do blob:", (imageBlob as any).type);
+      console.log("Tamanho do blob (bytes):", imageBlob.size);
 
       const reader = new FileReader();
-      reader.readAsDataURL(fixedBlob);
+      reader.readAsDataURL(imageBlob);
       reader.onloadend = () => {
         let base64data = reader.result as string;
         // Normaliza para PNG caso o polyfill tenha usado application/octet-stream
