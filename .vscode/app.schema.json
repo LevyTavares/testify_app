@@ -1,0 +1,86 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Local Expo App Schema (minimal)",
+  "type": "object",
+  "additionalProperties": true,
+  "properties": {
+    "expo": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "name": { "type": "string" },
+        "slug": { "type": "string" },
+        "version": { "type": "string" },
+        "orientation": { "type": "string" },
+        "icon": { "type": "string" },
+        "scheme": { "type": "string" },
+        "userInterfaceStyle": { "type": "string" },
+        "newArchEnabled": { "type": "boolean" },
+        "splash": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "image": { "type": "string" },
+            "resizeMode": { "type": "string" },
+            "backgroundColor": { "type": "string" }
+          }
+        },
+        "ios": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "supportsTablet": { "type": "boolean" }
+          }
+        },
+        "android": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "adaptiveIcon": {
+              "type": "object",
+              "additionalProperties": true,
+              "properties": {
+                "foregroundImage": { "type": "string" },
+                "backgroundColor": { "type": "string" }
+              }
+            },
+            "edgeToEdgeEnabled": { "type": "boolean" },
+            "predictiveBackGestureEnabled": { "type": "boolean" },
+            "permissions": {
+              "type": "array",
+              "items": { "type": "string" }
+            }
+          }
+        },
+        "web": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "bundler": { "type": "string" },
+            "output": { "type": "string" },
+            "favicon": { "type": "string" }
+          }
+        },
+        "plugins": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              { "type": "string" },
+              { "type": "array" },
+              { "type": "object" }
+            ]
+          }
+        },
+        "experiments": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "typedRoutes": { "type": "boolean" }
+          }
+        }
+      },
+      "required": ["name", "slug"]
+    }
+  },
+  "required": ["expo"]
+}

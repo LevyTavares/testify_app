@@ -6,6 +6,12 @@
   },
   // Evita erro de schema 429 ao validar app.json (VS Code tentando baixar schema do GitHub)
   "json.schemaDownload.enable": false,
-  // Desliga validação JSON no workspace para não bloquear por causa de schema externo
-  "json.validate.enable": false
+  // Reativa validação JSON usando um schema local para app.json
+  "json.validate.enable": true,
+  "json.schemas": [
+    {
+      "fileMatch": ["/app.json", "app.json"],
+      "url": "/home/levy/testify/testify_app/.vscode/app.schema.json"
+    }
+  ]
 }
