@@ -4,3 +4,4 @@
 declare module "react-native";
 declare module "expo-sqlite";
 declare module "expo-sharing";
+declare module "react-native-safe-area-context";

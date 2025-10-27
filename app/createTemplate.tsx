@@ -7,12 +7,12 @@ import {
   StyleSheet,
   Image,
   ScrollView,
-  SafeAreaView,
   StatusBar,
   Platform,
   ActivityIndicator,
   Alert, // <--- Import Alert
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
@@ -319,6 +319,71 @@ export default function CreateTemplateScreen() {
   };
   // --- FIM DA FUNÇÃO DE DOWNLOAD ---
 
+  // --- BOTÃO/FLUXO DE COMPARTILHAMENTO ---
+  const handleShareImage = async () => {
+    if (!generatedGabaritoUri) {
+      Alert.alert("Erro", "Nenhuma imagem para compartilhar.");
+      return;
+    }
+
+    // Normaliza a URI base64
+    let uriForShare = generatedGabaritoUri;
+    const isDataUrl = uriForShare.startsWith("data:");
+    const hasBase64 = uriForShare.includes(";base64,");
+    if (!isDataUrl || !hasBase64) {
+      Alert.alert("Erro", "Formato inválido (não é base64)");
+      return;
+    }
+    if (uriForShare.startsWith("data:application/octet-stream;base64,")) {
+      uriForShare = uriForShare.replace(
+        "data:application/octet-stream;base64,",
+        "data:image/png;base64,"
+      );
+    }
+
+    try {
+      // Extrai base64 e grava temporário
+      const base64Index = uriForShare.indexOf("base64,");
+      const base64Code = uriForShare.slice(base64Index + "base64,".length);
+      const filename = `gabarito_${
+        tituloProva.replace(/[^a-zA-Z0-9_-]/g, "_") || Date.now()
+      }.png`;
+      const fileUri = FileSystem.cacheDirectory + filename;
+      await FileSystem.writeAsStringAsync(fileUri, base64Code, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+
+      // Import dinâmico do expo-sharing
+      let SharingMod: any = null;
+      try {
+        SharingMod = await import("expo-sharing");
+      } catch (e) {
+        SharingMod = null;
+      }
+      if (SharingMod && (await SharingMod.isAvailableAsync())) {
+        await SharingMod.shareAsync(fileUri, {
+          mimeType: "image/png",
+          dialogTitle: `Compartilhar Gabarito "${tituloProva}"`,
+          UTI: "public.png",
+        });
+      } else {
+        Alert.alert(
+          "Compartilhar indisponível",
+          "O compartilhamento não está disponível neste ambiente."
+        );
+      }
+
+      // Limpa arquivo temporário (opcional)
+      try {
+        await FileSystem.deleteAsync(fileUri, { idempotent: true });
+      } catch {}
+    } catch (error) {
+      console.error("Erro ao compartilhar imagem:", error);
+      Alert.alert("Erro", "Não foi possível compartilhar a imagem.");
+    }
+  };
+  // --- FIM DO FLUXO DE COMPARTILHAMENTO ---
+
   // --- RENDERIZAÇÃO (JSX) ---
 
   // --- PASSO 3: GABARITO SALVO ---
@@ -412,6 +477,24 @@ export default function CreateTemplateScreen() {
               </Text>
             </TouchableOpacity>
             {/* --- FIM DA MODIFICAÇÃO DO BOTÃO --- */}
+
+            {/* Botão de Compartilhar PNG (útil no Expo Go) */}
+            <TouchableOpacity
+              style={styles.secondaryButton}
+              onPress={handleShareImage}
+              disabled={!generatedGabaritoUri || isGeneratingImage}
+            >
+              <Text
+                style={[
+                  styles.secondaryButtonText,
+                  (!generatedGabaritoUri || isGeneratingImage) && {
+                    opacity: 0.5,
+                  },
+                ]}
+              >
+                Compartilhar PNG
+              </Text>
+            </TouchableOpacity>
 
             <TouchableOpacity
               style={styles.secondaryButton}
