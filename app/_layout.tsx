@@ -1,19 +1,17 @@
 import { Stack } from 'expo-router';
-// Importamos o Provider E o Hook do nosso contexto
 import { TemplateProvider, useTemplates } from '../context/TemplateContext';
-import React from 'react';
-// Importamos os componentes para mostrar o loading
+import React, { useState, useEffect } from 'react';
+import SplashScreen from '../components/SplashScreen'; //
 import { ActivityIndicator, View, StyleSheet } from 'react-native';
+// --- ADICIONE ESTA IMPORTAÇÃO ---
+import { PaperProvider } from 'react-native-paper';
 
-// Criamos um componente interno que pode usar o hook useTemplates()
-// porque ele será renderizado DENTRO do TemplateProvider
+// Esta função interna lida com o carregamento do DB
 function AppLayout() {
-  // Pegamos o estado isLoading do nosso contexto
-  const { isLoading } = useTemplates();
+  const { isLoading } = useTemplates(); // Estado de carregamento do DB
 
-  // Se o contexto ainda está carregando os dados do SQLite...
+  // Se estiver carregando do DB, mostra um spinner
   if (isLoading) {
-    // ...mostramos um indicador de atividade (spinner)
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#346a74" />
@@ -21,30 +19,48 @@ function AppLayout() {
     );
   }
 
-  // Se isLoading for false, o DB carregou, então mostramos o app principal
+  // Se já carregou, mostra o app
   return (
     <Stack screenOptions={{ headerShown: false }}>
-      {/* Aqui o Expo Router vai renderizar as telas (index, createTemplate, etc.) */}
+      {/* O app principal */}
     </Stack>
   );
 }
 
-// O layout principal agora só precisa envolver tudo com o Provider
-// O AppLayout será renderizado como filho do Provider
+// O Layout Raiz (RootLayout)
 export default function RootLayout() {
+  // Estado para o timer da Splash Screen
+  const [isLoadingSplash, setIsLoadingSplash] = useState(true);
+
+  // Timer de 2.5 segundos da Splash Screen
+  useEffect(() => {
+    const timer = setTimeout(() => setIsLoadingSplash(false), 2500);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // 1. Se o timer da splash estiver rodando, mostre a SplashScreen
+  if (isLoadingSplash) {
+    return <SplashScreen />; //
+  }
+
+  // 2. Se o timer acabou, mostre o app principal
   return (
-    <TemplateProvider>
-      <AppLayout />
-    </TemplateProvider>
+    // --- ENVOLVA COM O PAPERPROVIDER ---
+    <PaperProvider>
+      <TemplateProvider>
+        <AppLayout />
+      </TemplateProvider>
+    </PaperProvider>
+    // --- FIM DA MUDANÇA ---
   );
 }
 
-// Estilos simples para centralizar o spinner de loading
+// Estilos para o container de loading
 const styles = StyleSheet.create({
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f0f8f8', // Mesma cor de fundo do app
+    backgroundColor: '#f0f8f8',
   },
 });
