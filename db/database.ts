@@ -1,7 +1,9 @@
 // db/database.ts - VERSÃO COMPLETA E LIMPA
 
 // Usamos a importação de namespace, que é a mais comum
-import * as SQLite from "expo-sqlite";
+// Usamos a API "legacy" síncrona do expo-sqlite, que expõe openDatabase
+// Isso evita o erro "openDatabase is not a function" nas versões novas do Expo.
+import * as SQLite from "expo-sqlite/legacy";
 // Removemos importações de tipos específicos para evitar incompatibilidades de namespace entre versões do Expo.
 
 // --- DEFINIÇÃO DOS TIPOS (Definidos UMA VEZ AQUI) ---
