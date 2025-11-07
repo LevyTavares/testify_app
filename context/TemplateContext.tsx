@@ -1,32 +1,31 @@
-// context/TemplateContext.tsx - VERSÃO CORRIGIDA
-
 import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
 import * as db from '../db/database';
-// --- MUDANÇA: Importa os tipos do arquivo DB ---
-import { Template, ReportResult } from '../db/database';
-// Re-exporta para as telas (boa prática)
-export type { Template, ReportResult } from '../db/database';
+// --- MUDANÇA AQUI ---
+// Importamos o tipo Template que AGORA VEM de database.ts
+import { Template } from '../db/database';
+// Removemos: export type { Template } from '../db/database';
 
+// --- O resto do arquivo (Tipos, ContextType, Provider, Hook) permanece o mesmo ---
+// ... (Cole o restante do código do TemplateContext.tsx aqui,
+//      exatamente como estava na minha resposta anterior) ...
 
 // --- Tipos ---
-// O que o Contexto vai fornecer
+type ReportResult = Template['results'][0];
+
 type TemplateContextType = {
   templates: Template[];
-  // Ajustado para aceitar o caminho da imagem
-  handleAddTemplate: (title: string, numQuestoes: string, correctAnswers: string[], gabaritoImagePath: string | null) => Promise<void>;
-  handleAddReport: (template: Template, result: { score: string; correct: number; incorrect: number; }, studentName: string, studentMatricula: string | null, studentTurma: string | null) => Promise<void>;
+  handleAddTemplate: (title: string, numQuestoes: string, correctAnswers: string[]) => Promise<void>;
+  handleAddReport: (template: Template, result: { score: string; correct: number; incorrect: number; }, studentName: string, studentMatricula: string | null, studentTurma: string | null) => Promise<void>; // Aceita null
   handleDeleteTemplate: (templateId: string) => Promise<void>;
   isLoading: boolean;
 };
 
 const TemplateContext = createContext<TemplateContextType>(null!);
 
-// O Provedor (Cérebro)
 export const TemplateProvider = ({ children }: { children: ReactNode }) => {
   const [templates, setTemplates] = useState<Template[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // EFEITO PARA INICIAR O DB E CARREGAR DADOS
   useEffect(() => {
     const setupAndLoadDB = async () => {
       setIsLoading(true);
@@ -45,13 +44,7 @@ export const TemplateProvider = ({ children }: { children: ReactNode }) => {
     setupAndLoadDB();
   }, []);
 
-  // FUNÇÃO handleAddTemplate
-  const handleAddTemplate = async (
-    title: string,
-    numQuestoes: string,
-    correctAnswers: string[],
-    gabaritoImagePath: string | null // <-- Aceita o caminho
-  ) => {
+  const handleAddTemplate = async (title: string, numQuestoes: string, correctAnswers: string[]) => {
     const newTemplateData: Template = {
       id: Date.now().toString(),
       title: title,
@@ -59,11 +52,10 @@ export const TemplateProvider = ({ children }: { children: ReactNode }) => {
       numQuestoes: parseInt(numQuestoes, 10),
       correctAnswers: correctAnswers,
       results: [],
-      gabaritoImagePath: gabaritoImagePath, // <-- Passa o caminho
     };
     try {
       await db.addTemplateDB(newTemplateData);
-      console.log("Template salvo no DB com caminho da imagem:", newTemplateData.title);
+      console.log("Template salvo no DB:", newTemplateData.title);
       setTemplates(prevTemplates => [newTemplateData, ...prevTemplates]);
     } catch (err) {
       console.error("Erro ao salvar gabarito no DB:", err);
@@ -71,7 +63,7 @@ export const TemplateProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // FUNÇÃO handleAddReport
+  // Ajustado para aceitar null nos tipos
   const handleAddReport = async (template: Template, result: { score: string; correct: number; incorrect: number; }, studentName: string, studentMatricula: string | null, studentTurma: string | null) => {
     try {
       await db.addReportDB(template.id, result, studentName, studentMatricula, studentTurma);
@@ -84,7 +76,6 @@ export const TemplateProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // FUNÇÃO handleDeleteTemplate
   const handleDeleteTemplate = async (templateId: string) => {
     try {
       await db.deleteTemplateDB(templateId);
@@ -96,7 +87,6 @@ export const TemplateProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // Fornece os valores
   return (
     <TemplateContext.Provider value={{
         templates,
@@ -110,7 +100,6 @@ export const TemplateProvider = ({ children }: { children: ReactNode }) => {
   );
 };
 
-// Hook para usar o contexto
 export const useTemplates = () => {
   return useContext(TemplateContext);
 };

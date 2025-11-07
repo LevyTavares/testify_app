@@ -1,9 +1,8 @@
-// db/database.ts - reescrito usando API assíncrona moderna do expo-sqlite
-// Evita erros de runtime com openDatabase() em SDKs recentes.
+// db/database.ts - VERSÃO FINAL (Sem tipos duplicados)
 
 import * as SQLite from "expo-sqlite";
 
-// Tipos de domínio
+// --- DEFINIÇÃO DOS TIPOS (Definidos UMA VEZ AQUI e exportados) ---
 export type ReportResult = {
   id: string;
   templateId: string;
@@ -21,119 +20,118 @@ export type Template = {
   date: string;
   numQuestoes: number;
   correctAnswers: string[];
-  results: ReportResult[];
-  gabaritoImagePath?: string | null;
+  results: ReportResult[]; // Usa o tipo ReportResult definido acima
 };
+// --- FIM DA DEFINIÇÃO DOS TIPOS ---
 
-// Instância (promessa) do DB assíncrono
-let dbPromise: Promise<any> | null = null;
-const getDB = async () => {
-  if (!dbPromise) {
-    dbPromise = SQLite.openDatabaseAsync("testify.db");
-  }
-  return dbPromise;
-};
+// --- Abertura do Banco de Dados ---
+// SDK 54+ usa a nova API síncrona/assíncrona
+const db = SQLite.openDatabaseSync("testify.db");
 
-// Inicializa tabelas
-export const initDB = async (): Promise<void> => {
-  const db = await getDB();
-  await db.runAsync(`CREATE TABLE IF NOT EXISTS templates (
-    id TEXT PRIMARY KEY NOT NULL,
-    title TEXT NOT NULL,
-    date TEXT NOT NULL,
-    numQuestoes INTEGER NOT NULL,
-    correctAnswers TEXT NOT NULL,
-    gabaritoImagePath TEXT NULL
-  );`);
-  await db.runAsync(`CREATE TABLE IF NOT EXISTS results (
-    id TEXT PRIMARY KEY NOT NULL,
-    templateId TEXT NOT NULL,
-    studentName TEXT NOT NULL,
-    studentMatricula TEXT,
-    studentTurma TEXT,
-    score TEXT NOT NULL,
-    correct INTEGER NOT NULL,
-    incorrect INTEGER NOT NULL,
-    FOREIGN KEY (templateId) REFERENCES templates(id) ON DELETE CASCADE
-  );`);
-};
-
-// CRUD Templates
-export const addTemplateDB = async (template: Template): Promise<void> => {
-  const db = await getDB();
-  await db.runAsync(
-    `INSERT INTO templates (id, title, date, numQuestoes, correctAnswers, gabaritoImagePath)
-     VALUES (?, ?, ?, ?, ?, ?);`,
-    [
-      template.id,
-      template.title,
-      template.date,
-      template.numQuestoes,
-      JSON.stringify(template.correctAnswers),
-      template.gabaritoImagePath || null,
-    ]
-  );
-};
-
-export const getTemplatesDB = async (): Promise<Template[]> => {
-  const db = await getDB();
-  const rows: any[] = await db.getAllAsync(
-    "SELECT * FROM templates ORDER BY date DESC;"
-  );
-  const templates: Template[] = [];
-  for (const t of rows) {
-    const resultRows: any[] = await db.getAllAsync(
-      "SELECT * FROM results WHERE templateId = ? ORDER BY studentName ASC;",
-      [t.id]
+// --- Funções de Inicialização (com tipos explícitos) ---
+export const initDB = async () => {
+  // Cria as tabelas se não existirem
+  await db.execAsync(`
+    PRAGMA foreign_keys = ON;
+    CREATE TABLE IF NOT EXISTS templates (
+      id TEXT PRIMARY KEY NOT NULL,
+      title TEXT NOT NULL,
+      date TEXT NOT NULL,
+      numQuestoes INTEGER NOT NULL,
+      correctAnswers TEXT NOT NULL
     );
-    const results: ReportResult[] = resultRows.map((r: any) => ({
-      id: r.id,
-      templateId: r.templateId,
-      studentName: r.studentName,
-      studentMatricula: r.studentMatricula,
-      studentTurma: r.studentTurma,
-      score: r.score,
-      correct: r.correct,
-      incorrect: r.incorrect,
-    }));
+    CREATE TABLE IF NOT EXISTS results (
+      id TEXT PRIMARY KEY NOT NULL,
+      templateId TEXT NOT NULL,
+      studentName TEXT NOT NULL,
+      studentMatricula TEXT,
+      studentTurma TEXT,
+      score TEXT NOT NULL,
+      correct INTEGER NOT NULL,
+      incorrect INTEGER NOT NULL,
+      FOREIGN KEY (templateId) REFERENCES templates(id) ON DELETE CASCADE
+    );
+  `);
+};
+
+// --- Funções CRUD para Templates (com tipos explícitos) ---
+export const addTemplateDB = async (template: Template) => {
+  const res = await db.runAsync(
+    `INSERT INTO templates (id, title, date, numQuestoes, correctAnswers) VALUES ($id, $title, $date, $num, $answers);`,
+    {
+      $id: template.id,
+      $title: template.title,
+      $date: template.date,
+      $num: template.numQuestoes,
+      $answers: JSON.stringify(template.correctAnswers),
+    }
+  );
+  return res;
+};
+
+export const getTemplatesDB = async () => {
+  const templates: Template[] = [];
+  type TemplateRow = {
+    id: string;
+    title: string;
+    date: string;
+    numQuestoes: number;
+    correctAnswers: string;
+  };
+  type ResultRow = ReportResult;
+
+  const templateRows: TemplateRow[] = await db.getAllAsync(
+    "SELECT id, title, date, numQuestoes, correctAnswers FROM templates ORDER BY date DESC;",
+    []
+  );
+
+  for (const templateRow of templateRows) {
+    const resultRows: ResultRow[] = await db.getAllAsync(
+      "SELECT id, templateId, studentName, studentMatricula, studentTurma, score, correct, incorrect FROM results WHERE templateId = $id ORDER BY studentName ASC;",
+      { $id: templateRow.id }
+    );
+
     templates.push({
-      id: t.id,
-      title: t.title,
-      date: t.date,
-      numQuestoes: t.numQuestoes,
-      correctAnswers: JSON.parse(t.correctAnswers || "[]"),
-      results,
-      gabaritoImagePath: t.gabaritoImagePath,
+      id: templateRow.id,
+      title: templateRow.title,
+      date: templateRow.date,
+      numQuestoes: templateRow.numQuestoes,
+      correctAnswers: JSON.parse(templateRow.correctAnswers || "[]"),
+      results: resultRows ?? [],
     });
   }
+
   return templates;
 };
 
-export const deleteTemplateDB = async (templateId: string): Promise<void> => {
-  const db = await getDB();
-  await db.runAsync("DELETE FROM templates WHERE id = ?;", [templateId]);
+export const deleteTemplateDB = async (templateId: string) => {
+  const res = await db.runAsync("DELETE FROM templates WHERE id = $id;", {
+    $id: templateId,
+  });
+  return res;
 };
 
+// --- Funções CRUD para Results (com tipos explícitos) ---
 export const addReportDB = async (
   templateId: string,
   result: { score: string; correct: number; incorrect: number },
   studentName: string,
   studentMatricula: string | null,
   studentTurma: string | null
-): Promise<void> => {
-  const db = await getDB();
-  await db.runAsync(
+) => {
+  const res = await db.runAsync(
     `INSERT INTO results (id, templateId, studentName, studentMatricula, studentTurma, score, correct, incorrect)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?);`,
-    [
-      Date.now().toString() + Math.random(),
-      templateId,
-      studentName || "Aluno Não Identificado",
-      studentMatricula || null,
-      studentTurma || null,
-      result.score,
-      result.correct,
-      result.incorrect,
-    ]
+     VALUES ($id, $templateId, $studentName, $studentMatricula, $studentTurma, $score, $correct, $incorrect);`,
+    {
+      $id: Date.now().toString() + Math.random(),
+      $templateId: templateId,
+      $studentName: studentName || "Aluno Não Identificado",
+      $studentMatricula: studentMatricula || null,
+      $studentTurma: studentTurma || null,
+      $score: result.score,
+      $correct: result.correct,
+      $incorrect: result.incorrect,
+    }
   );
+  return res;
 };

@@ -108,8 +108,7 @@ export default function CreateTemplateScreen() {
       await handleAddTemplate(
         newTemplateData.title,
         newTemplateData.numQuestoes.toString(),
-        newTemplateData.correctAnswers,
-        null // Ainda não temos a imagem gerada neste momento
+        newTemplateData.correctAnswers
       );
       console.log("Template salvo no DB local antes de gerar imagem.");
     } catch (error) {
