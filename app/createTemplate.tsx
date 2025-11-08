@@ -158,11 +158,19 @@ export default function CreateTemplateScreen() {
       }
       console.log("Base64 gerado (início):", base64data.substring(0, 50));
 
-      // Extrai somente o código base64 (sem o prefixo data:)
-      const base64Code = base64data.split("base64,")[1];
+      // Usa a variável com nome explícito e extrai exatamente após 'data:image/png;base64,'
+      const imageBase64Data = base64data;
+      let base64Code = imageBase64Data.split("data:image/png;base64,")[1];
+      if (!base64Code) {
+        // fallback seguro caso algum ambiente traga outro mime mas mantenha 'base64,'
+        base64Code = imageBase64Data.split("base64,")[1];
+      }
+      if (!base64Code) {
+        throw new Error("Formato de imagem base64 inválido.");
+      }
       const filename = `gabarito_img_${Date.now()}.png`;
-      const docDir = (FileSystem as any).documentDirectory as string;
-      const fileUri = `${docDir}${filename}`;
+      const fileUri =
+        ((FileSystem as any).documentDirectory as string) + filename;
       await (FileSystem as any).writeAsStringAsync(fileUri, base64Code, {
         encoding: (FileSystem as any).EncodingType?.Base64 || ("base64" as any),
       });
@@ -173,6 +181,7 @@ export default function CreateTemplateScreen() {
       console.error("Erro ao gerar imagem do gabarito:", error);
       alert(`Erro ao conectar com o servidor para gerar a imagem: ${error}`);
       setGeneratedGabaritoUri(null);
+      savedFileUri = null;
     } finally {
       // Salva o template no SQLite, com o caminho permanente (ou null em caso de erro)
       try {
