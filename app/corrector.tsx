@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
   TextInput,
   Alert, // <-- Importa Alert
+  KeyboardAvoidingView,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
@@ -136,6 +137,9 @@ export default function CorrectorScreen() {
 
   // --- PASSO 4: RESULTADO --- (JSX idêntico)
   if (step === "result") {
+    // Refs para navegação entre campos
+    const matriculaRef = useRef<any>(null);
+    const turmaRef = useRef<any>(null);
     return (
       <SafeAreaView style={styles.container}>
         {/* ... (código JSX do passo 'result' completo) ... */}
@@ -153,90 +157,111 @@ export default function CorrectorScreen() {
           </TouchableOpacity>
           <Text style={styles.headerTitleResult}>Resultado da Correção</Text>
         </View>
-        <ScrollView contentContainerStyle={styles.scrollContent}>
-          <View style={styles.card}>
-            <View style={styles.resultHeader}>
-              <MaterialCommunityIcons
-                name="check-decagram"
-                size={40}
-                color="#4CAF50"
-              />
-              <Text style={styles.resultScore}>{correctionResult.score}</Text>
-            </View>
-            <View style={styles.resultDetails}>
-              <Text style={styles.detailText}>
-                Acertos: {correctionResult.correct}
-              </Text>
-              <Text style={styles.detailText}>
-                Erros: {correctionResult.incorrect}
-              </Text>
-            </View>
-            <Text style={styles.label}>Nome do Aluno(a)</Text>
-            <View style={styles.inputContainer}>
-              <View style={styles.inputIcon}>
-                <MaterialCommunityIcons name="account" size={22} color="#999" />
-              </View>
-              <TextInput
-                style={styles.input}
-                placeholder="Digite o nome do aluno"
-                placeholderTextColor="#999"
-                value={studentName}
-                onChangeText={setStudentName}
-              />
-            </View>
-            <Text style={styles.label}>Matrícula (Opcional)</Text>
-            <View style={styles.inputContainer}>
-              <View style={styles.inputIcon}>
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          keyboardVerticalOffset={Platform.OS === "android" ? 80 : 0}
+        >
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            keyboardShouldPersistTaps="handled"
+          >
+            <View style={styles.card}>
+              <View style={styles.resultHeader}>
                 <MaterialCommunityIcons
-                  name="card-account-details-outline"
-                  size={22}
-                  color="#999"
+                  name="check-decagram"
+                  size={40}
+                  color="#4CAF50"
+                />
+                <Text style={styles.resultScore}>{correctionResult.score}</Text>
+              </View>
+              <View style={styles.resultDetails}>
+                <Text style={styles.detailText}>
+                  Acertos: {correctionResult.correct}
+                </Text>
+                <Text style={styles.detailText}>
+                  Erros: {correctionResult.incorrect}
+                </Text>
+              </View>
+              <Text style={styles.label}>Nome do Aluno(a)</Text>
+              <View style={styles.inputContainer}>
+                <View style={styles.inputIcon}>
+                  <MaterialCommunityIcons
+                    name="account"
+                    size={22}
+                    color="#999"
+                  />
+                </View>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Digite o nome do aluno"
+                  placeholderTextColor="#999"
+                  value={studentName}
+                  onChangeText={setStudentName}
+                  returnKeyType="next"
+                  onSubmitEditing={() => matriculaRef.current?.focus()}
                 />
               </View>
-              <TextInput
-                style={styles.input}
-                placeholder="Digite a matrícula"
-                placeholderTextColor="#999"
-                value={studentMatricula}
-                onChangeText={setStudentMatricula}
-                keyboardType="numeric"
-              />
-            </View>
-            <Text style={styles.label}>Turma (Opcional)</Text>
-            <View style={styles.inputContainer}>
-              <View style={styles.inputIcon}>
-                <MaterialCommunityIcons
-                  name="google-classroom"
-                  size={22}
-                  color="#999"
+              <Text style={styles.label}>Matrícula (Opcional)</Text>
+              <View style={styles.inputContainer}>
+                <View style={styles.inputIcon}>
+                  <MaterialCommunityIcons
+                    name="card-account-details-outline"
+                    size={22}
+                    color="#999"
+                  />
+                </View>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Digite a matrícula"
+                  placeholderTextColor="#999"
+                  value={studentMatricula}
+                  onChangeText={setStudentMatricula}
+                  keyboardType="numeric"
+                  ref={matriculaRef}
+                  returnKeyType="next"
+                  onSubmitEditing={() => turmaRef.current?.focus()}
                 />
               </View>
-              <TextInput
-                style={styles.input}
-                placeholder="Digite a turma"
-                placeholderTextColor="#999"
-                value={studentTurma}
-                onChangeText={setStudentTurma}
-              />
+              <Text style={styles.label}>Turma (Opcional)</Text>
+              <View style={styles.inputContainer}>
+                <View style={styles.inputIcon}>
+                  <MaterialCommunityIcons
+                    name="google-classroom"
+                    size={22}
+                    color="#999"
+                  />
+                </View>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Digite a turma"
+                  placeholderTextColor="#999"
+                  value={studentTurma}
+                  onChangeText={setStudentTurma}
+                  ref={turmaRef}
+                  returnKeyType="done"
+                  onSubmitEditing={handleCorrectNext}
+                />
+              </View>
+              <TouchableOpacity
+                style={styles.primaryButton}
+                onPress={handleCorrectNext}
+              >
+                <Text style={styles.primaryButtonText}>
+                  Salvar e Corrigir Próxima
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.secondaryButton}
+                onPress={handleFinish}
+              >
+                <Text style={styles.secondaryButtonText}>
+                  Salvar e Finalizar Sessão
+                </Text>
+              </TouchableOpacity>
             </View>
-            <TouchableOpacity
-              style={styles.primaryButton}
-              onPress={handleCorrectNext}
-            >
-              <Text style={styles.primaryButtonText}>
-                Salvar e Corrigir Próxima
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.secondaryButton}
-              onPress={handleFinish}
-            >
-              <Text style={styles.secondaryButtonText}>
-                Salvar e Finalizar Sessão
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </ScrollView>
+          </ScrollView>
+        </KeyboardAvoidingView>
       </SafeAreaView>
     );
   }
