@@ -22,7 +22,8 @@ import type { Template } from "../db/database";
 // --- IMPORTS PARA DOWNLOAD ---
 // Usamos a API "legacy" do expo-file-system (SDK 54+)
 // para ter acesso a cacheDirectory, writeAsStringAsync e EncodingType
-import * as FileSystem from "expo-file-system";
+// Usar API legacy para evitar warnings e garantir EncodingType/Base64
+import * as FileSystem from "expo-file-system/legacy";
 import * as MediaLibrary from "expo-media-library";
 import * as Sharing from "expo-sharing";
 // ----------------------------
@@ -169,10 +170,9 @@ export default function CreateTemplateScreen() {
         throw new Error("Formato de imagem base64 inválido.");
       }
       const filename = `gabarito_img_${Date.now()}.png`;
-      const fileUri =
-        ((FileSystem as any).documentDirectory as string) + filename;
-      await (FileSystem as any).writeAsStringAsync(fileUri, base64Code, {
-        encoding: (FileSystem as any).EncodingType?.Base64 || ("base64" as any),
+      const fileUri = (FileSystem.documentDirectory as string) + filename;
+      await FileSystem.writeAsStringAsync(fileUri, base64Code, {
+        encoding: FileSystem.EncodingType.Base64,
       });
       // Atualiza UI para usar o arquivo local permanente
       setGeneratedGabaritoUri(fileUri);
@@ -256,11 +256,10 @@ export default function CreateTemplateScreen() {
           tituloProva.replace(/[^a-zA-Z0-9_-]/g, "_") || Date.now()
         }.png`;
         fileUri =
-          (((FileSystem as any).cacheDirectory ||
-            (FileSystem as any).documentDirectory) as string) + filename;
-        await (FileSystem as any).writeAsStringAsync(fileUri, base64Code, {
-          encoding:
-            (FileSystem as any).EncodingType?.Base64 || ("base64" as any),
+          (FileSystem.cacheDirectory || FileSystem.documentDirectory) +
+          filename;
+        await FileSystem.writeAsStringAsync(fileUri, base64Code, {
+          encoding: FileSystem.EncodingType.Base64,
         });
         console.log("Imagem salva temporariamente em:", fileUri);
         needsCleanup = true;
@@ -324,7 +323,7 @@ export default function CreateTemplateScreen() {
       // 7. Limpa arquivo temporário se criado
       if (needsCleanup) {
         try {
-          await (FileSystem as any).deleteAsync(fileUri, { idempotent: true });
+          await FileSystem.deleteAsync(fileUri, { idempotent: true });
           console.log("Arquivo temporário excluído:", fileUri);
         } catch (deleteError) {
           console.warn(
@@ -375,11 +374,10 @@ export default function CreateTemplateScreen() {
           tituloProva.replace(/[^a-zA-Z0-9_-]/g, "_") || Date.now()
         }.png`;
         fileUri =
-          (((FileSystem as any).cacheDirectory ||
-            (FileSystem as any).documentDirectory) as string) + filename;
-        await (FileSystem as any).writeAsStringAsync(fileUri, base64Code, {
-          encoding:
-            (FileSystem as any).EncodingType?.Base64 || ("base64" as any),
+          (FileSystem.cacheDirectory || FileSystem.documentDirectory) +
+          filename;
+        await FileSystem.writeAsStringAsync(fileUri, base64Code, {
+          encoding: FileSystem.EncodingType.Base64,
         });
         needsCleanup = true;
       }
@@ -407,7 +405,7 @@ export default function CreateTemplateScreen() {
       // Limpa arquivo temporário se criado
       if (needsCleanup) {
         try {
-          await (FileSystem as any).deleteAsync(fileUri, { idempotent: true });
+          await FileSystem.deleteAsync(fileUri, { idempotent: true });
         } catch {}
       }
     } catch (error) {

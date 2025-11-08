@@ -56,6 +56,25 @@ export const initDB = async () => {
       FOREIGN KEY (templateId) REFERENCES templates(id) ON DELETE CASCADE
     );
   `);
+
+  // MIGRAÇÃO: garante que a coluna gabaritoImagePath exista mesmo em bancos antigos
+  try {
+    const columns: Array<{ name: string }> = await db.getAllAsync(
+      `PRAGMA table_info(templates);`
+    );
+    const hasImagePath = columns.some((c) => c.name === "gabaritoImagePath");
+    if (!hasImagePath) {
+      await db.execAsync(
+        `ALTER TABLE templates ADD COLUMN gabaritoImagePath TEXT;`
+      );
+      console.log("Coluna gabaritoImagePath adicionada via migração.");
+    }
+  } catch (e) {
+    console.warn(
+      "Não foi possível verificar/adicionar coluna gabaritoImagePath:",
+      e
+    );
+  }
 };
 
 // --- Funções CRUD para Templates (com tipos explícitos) ---
