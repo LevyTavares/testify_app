@@ -136,10 +136,11 @@ export default function CorrectorScreen() {
   // --- RENDERIZAÇÃO (JSX) ---
 
   // --- PASSO 4: RESULTADO --- (JSX idêntico)
+  // Refs fixos (fora do bloco condicional para não quebrar a ordem de hooks)
+  const matriculaRef = useRef<any>(null);
+  const turmaRef = useRef<any>(null);
+
   if (step === "result") {
-    // Refs para navegação entre campos
-    const matriculaRef = useRef<any>(null);
-    const turmaRef = useRef<any>(null);
     return (
       <SafeAreaView style={styles.container}>
         {/* ... (código JSX do passo 'result' completo) ... */}
