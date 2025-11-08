@@ -22,7 +22,7 @@ import type { Template } from "../db/database";
 // --- IMPORTS PARA DOWNLOAD ---
 // Usamos a API "legacy" do expo-file-system (SDK 54+)
 // para ter acesso a cacheDirectory, writeAsStringAsync e EncodingType
-import * as FileSystem from "expo-file-system/legacy";
+import * as FileSystem from "expo-file-system";
 import * as MediaLibrary from "expo-media-library";
 import * as Sharing from "expo-sharing";
 // ----------------------------
@@ -95,32 +95,11 @@ export default function CreateTemplateScreen() {
       .sort((a, b) => parseInt(a) - parseInt(b))
       .map((key) => correctAnswers[parseInt(key, 10)]!);
 
-    const templateId = Date.now().toString();
-    const newTemplateData: Omit<Template, "results"> = {
-      id: templateId,
-      title: tituloProva,
-      date: new Date().toLocaleDateString("pt-BR"),
-      numQuestoes: parseInt(numQuestoes, 10),
-      correctAnswers: answersArray,
-    };
-
-    try {
-      await handleAddTemplate(
-        newTemplateData.title,
-        newTemplateData.numQuestoes.toString(),
-        newTemplateData.correctAnswers
-      );
-      console.log("Template salvo no DB local antes de gerar imagem.");
-    } catch (error) {
-      console.error("Erro ao salvar template no DB local:", error);
-      alert("Erro ao salvar gabarito localmente.");
-      return;
-    }
-
     setIsGeneratingImage(true);
     setGeneratedGabaritoUri(null);
     setStep(3);
 
+    let savedFileUri: string | null = null;
     try {
       const backendUrl = "http://192.168.0.8:8000/generate_gabarito"; // SEU IP
 
@@ -157,33 +136,60 @@ export default function CreateTemplateScreen() {
       // e gerar "application/octet-stream" no data URL. Vamos converter e normalizar depois.
       const imageBlob = await response.blob();
       console.log("Blob de imagem recebido do backend:", imageBlob);
-      // Alguns polyfills não expõem .type; esse log pode vir vazio em Android/Expo
       console.log("Tipo do blob:", (imageBlob as any).type);
       console.log("Tamanho do blob (bytes):", imageBlob.size);
 
-      const reader = new FileReader();
-      reader.readAsDataURL(imageBlob);
-      reader.onloadend = () => {
-        let base64data = reader.result as string;
-        // Normaliza para PNG caso o polyfill tenha usado application/octet-stream
-        if (base64data.startsWith("data:application/octet-stream;base64,")) {
-          base64data = base64data.replace(
-            "data:application/octet-stream;base64,",
-            "data:image/png;base64,"
-          );
-        }
-        console.log("Base64 gerado (início):", base64data.substring(0, 50));
-        setGeneratedGabaritoUri(base64data);
-      };
-      reader.onerror = (error) => {
-        console.error("Erro ao converter blob para base64:", error);
-        throw new Error("Erro ao processar a imagem recebida.");
-      };
+      // Converte Blob para data URL (base64)
+      const blobToDataURL = (blob: Blob) =>
+        new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.onerror = (err) => reject(err);
+          reader.readAsDataURL(blob);
+        });
+
+      let base64data = await blobToDataURL(imageBlob);
+      // Normaliza para PNG caso o polyfill tenha usado application/octet-stream
+      if (base64data.startsWith("data:application/octet-stream;base64,")) {
+        base64data = base64data.replace(
+          "data:application/octet-stream;base64,",
+          "data:image/png;base64,"
+        );
+      }
+      console.log("Base64 gerado (início):", base64data.substring(0, 50));
+
+      // Extrai somente o código base64 (sem o prefixo data:)
+      const base64Code = base64data.split("base64,")[1];
+      const filename = `gabarito_img_${Date.now()}.png`;
+      const docDir = (FileSystem as any).documentDirectory as string;
+      const fileUri = `${docDir}${filename}`;
+      await (FileSystem as any).writeAsStringAsync(fileUri, base64Code, {
+        encoding: (FileSystem as any).EncodingType?.Base64 || ("base64" as any),
+      });
+      // Atualiza UI para usar o arquivo local permanente
+      setGeneratedGabaritoUri(fileUri);
+      savedFileUri = fileUri;
     } catch (error) {
       console.error("Erro ao gerar imagem do gabarito:", error);
       alert(`Erro ao conectar com o servidor para gerar a imagem: ${error}`);
       setGeneratedGabaritoUri(null);
     } finally {
+      // Salva o template no SQLite, com o caminho permanente (ou null em caso de erro)
+      try {
+        await handleAddTemplate(
+          tituloProva,
+          numQuestoes,
+          answersArray,
+          savedFileUri
+        );
+        console.log(
+          "Template salvo no DB local com caminho da imagem:",
+          savedFileUri
+        );
+      } catch (err) {
+        console.error("Erro ao salvar template no DB local:", err);
+        // Mantém a navegação, mas informa problema de persistência
+      }
       setIsGeneratingImage(false);
     }
   };
@@ -197,20 +203,23 @@ export default function CreateTemplateScreen() {
       );
       return;
     }
-
-    // Verifica/normaliza URI base64: aceita image/* ou application/octet-stream e corrige para PNG
+    // Aceita tanto file:// (já salvo) quanto data URL base64
     let uriForSave = generatedGabaritoUri;
+    const isFileUri = uriForSave.startsWith("file://");
     const isDataUrl = uriForSave.startsWith("data:");
     const hasBase64 = uriForSave.includes(";base64,");
-    if (!isDataUrl || !hasBase64) {
+    if (!isFileUri && (!isDataUrl || !hasBase64)) {
       Alert.alert(
         "Erro",
-        "Formato de imagem inválido para download (não é base64)."
+        "Formato de imagem inválido (não é base64 nem file://)"
       );
-      console.error("URI não é base64:", generatedGabaritoUri);
+      console.error("URI inválida para salvar:", generatedGabaritoUri);
       return;
     }
-    if (uriForSave.startsWith("data:application/octet-stream;base64,")) {
+    if (
+      !isFileUri &&
+      uriForSave.startsWith("data:application/octet-stream;base64,")
+    ) {
       uriForSave = uriForSave.replace(
         "data:application/octet-stream;base64,",
         "data:image/png;base64,"
@@ -228,23 +237,25 @@ export default function CreateTemplateScreen() {
         mediaGranted = false;
       }
 
-      // 2. Extrai os dados base64
-      // Sempre extraímos após 'base64,' independentemente do mime
-      const base64Index = uriForSave.indexOf("base64,");
-      const base64Code = uriForSave.slice(base64Index + "base64,".length);
-
-      // 3. Define nome e caminho temporário
-      const filename = `gabarito_${
-        tituloProva.replace(/[^a-zA-Z0-9_-]/g, "_") || Date.now()
-      }.png`;
-      // Usamos cacheDirectory que é limpo pelo sistema operacional eventualmente
-      const fileUri = FileSystem.cacheDirectory + filename;
-
-      // 4. Salva a string base64 como arquivo binário temporário
-      await FileSystem.writeAsStringAsync(fileUri, base64Code, {
-        encoding: FileSystem.EncodingType.Base64,
-      });
-      console.log("Imagem salva temporariamente em:", fileUri);
+      let fileUri: string = uriForSave;
+      let needsCleanup = false;
+      if (!isFileUri) {
+        // 2. Extrai os dados base64 e cria arquivo temporário
+        const base64Index = uriForSave.indexOf("base64,");
+        const base64Code = uriForSave.slice(base64Index + "base64,".length);
+        const filename = `gabarito_${
+          tituloProva.replace(/[^a-zA-Z0-9_-]/g, "_") || Date.now()
+        }.png`;
+        fileUri =
+          (((FileSystem as any).cacheDirectory ||
+            (FileSystem as any).documentDirectory) as string) + filename;
+        await (FileSystem as any).writeAsStringAsync(fileUri, base64Code, {
+          encoding:
+            (FileSystem as any).EncodingType?.Base64 || ("base64" as any),
+        });
+        console.log("Imagem salva temporariamente em:", fileUri);
+        needsCleanup = true;
+      }
 
       if (mediaGranted) {
         // 5. Cria o asset na galeria a partir do arquivo temporário
@@ -301,16 +312,17 @@ export default function CreateTemplateScreen() {
         }
       }
 
-      // 7. Limpa o arquivo temporário APÓS garantir que foi salvo na galeria
-      // Envolvemos em try/catch caso a exclusão falhe (não crítico)
-      try {
-        await FileSystem.deleteAsync(fileUri, { idempotent: true }); // idempotent: não dá erro se já não existir
-        console.log("Arquivo temporário excluído:", fileUri);
-      } catch (deleteError) {
-        console.warn(
-          "Não foi possível excluir o arquivo temporário:",
-          deleteError
-        );
+      // 7. Limpa arquivo temporário se criado
+      if (needsCleanup) {
+        try {
+          await (FileSystem as any).deleteAsync(fileUri, { idempotent: true });
+          console.log("Arquivo temporário excluído:", fileUri);
+        } catch (deleteError) {
+          console.warn(
+            "Não foi possível excluir o arquivo temporário:",
+            deleteError
+          );
+        }
       }
     } catch (error) {
       console.error("Erro detalhado ao salvar imagem:", error);
@@ -325,16 +337,19 @@ export default function CreateTemplateScreen() {
       Alert.alert("Erro", "Nenhuma imagem para compartilhar.");
       return;
     }
-
-    // Normaliza a URI base64
+    // Aceita file:// ou base64
     let uriForShare = generatedGabaritoUri;
+    const isFileUri = uriForShare.startsWith("file://");
     const isDataUrl = uriForShare.startsWith("data:");
     const hasBase64 = uriForShare.includes(";base64,");
-    if (!isDataUrl || !hasBase64) {
-      Alert.alert("Erro", "Formato inválido (não é base64)");
+    if (!isFileUri && (!isDataUrl || !hasBase64)) {
+      Alert.alert("Erro", "Formato inválido (não é base64 nem file://)");
       return;
     }
-    if (uriForShare.startsWith("data:application/octet-stream;base64,")) {
+    if (
+      !isFileUri &&
+      uriForShare.startsWith("data:application/octet-stream;base64,")
+    ) {
       uriForShare = uriForShare.replace(
         "data:application/octet-stream;base64,",
         "data:image/png;base64,"
@@ -342,16 +357,23 @@ export default function CreateTemplateScreen() {
     }
 
     try {
-      // Extrai base64 e grava temporário
-      const base64Index = uriForShare.indexOf("base64,");
-      const base64Code = uriForShare.slice(base64Index + "base64,".length);
-      const filename = `gabarito_${
-        tituloProva.replace(/[^a-zA-Z0-9_-]/g, "_") || Date.now()
-      }.png`;
-      const fileUri = FileSystem.cacheDirectory + filename;
-      await FileSystem.writeAsStringAsync(fileUri, base64Code, {
-        encoding: FileSystem.EncodingType.Base64,
-      });
+      let fileUri = uriForShare;
+      let needsCleanup = false;
+      if (!isFileUri) {
+        const base64Index = uriForShare.indexOf("base64,");
+        const base64Code = uriForShare.slice(base64Index + "base64,".length);
+        const filename = `gabarito_${
+          tituloProva.replace(/[^a-zA-Z0-9_-]/g, "_") || Date.now()
+        }.png`;
+        fileUri =
+          (((FileSystem as any).cacheDirectory ||
+            (FileSystem as any).documentDirectory) as string) + filename;
+        await (FileSystem as any).writeAsStringAsync(fileUri, base64Code, {
+          encoding:
+            (FileSystem as any).EncodingType?.Base64 || ("base64" as any),
+        });
+        needsCleanup = true;
+      }
 
       // Import dinâmico do expo-sharing
       let SharingMod: any = null;
@@ -373,10 +395,12 @@ export default function CreateTemplateScreen() {
         );
       }
 
-      // Limpa arquivo temporário (opcional)
-      try {
-        await FileSystem.deleteAsync(fileUri, { idempotent: true });
-      } catch {}
+      // Limpa arquivo temporário se criado
+      if (needsCleanup) {
+        try {
+          await (FileSystem as any).deleteAsync(fileUri, { idempotent: true });
+        } catch {}
+      }
     } catch (error) {
       console.error("Erro ao compartilhar imagem:", error);
       Alert.alert("Erro", "Não foi possível compartilhar a imagem.");

@@ -1,8 +1,14 @@
-import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
-import * as db from '../db/database';
+import React, {
+  createContext,
+  useState,
+  useContext,
+  ReactNode,
+  useEffect,
+} from "react";
+import * as db from "../db/database";
 // --- MUDANÇA AQUI ---
 // Importamos o tipo Template que AGORA VEM de database.ts
-import { Template } from '../db/database';
+import { Template } from "../db/database";
 // Removemos: export type { Template } from '../db/database';
 
 // --- O resto do arquivo (Tipos, ContextType, Provider, Hook) permanece o mesmo ---
@@ -10,12 +16,23 @@ import { Template } from '../db/database';
 //      exatamente como estava na minha resposta anterior) ...
 
 // --- Tipos ---
-type ReportResult = Template['results'][0];
+type ReportResult = Template["results"][0];
 
 type TemplateContextType = {
   templates: Template[];
-  handleAddTemplate: (title: string, numQuestoes: string, correctAnswers: string[]) => Promise<void>;
-  handleAddReport: (template: Template, result: { score: string; correct: number; incorrect: number; }, studentName: string, studentMatricula: string | null, studentTurma: string | null) => Promise<void>; // Aceita null
+  handleAddTemplate: (
+    title: string,
+    numQuestoes: string,
+    correctAnswers: string[],
+    gabaritoImagePath: string | null
+  ) => Promise<void>;
+  handleAddReport: (
+    template: Template,
+    result: { score: string; correct: number; incorrect: number },
+    studentName: string,
+    studentMatricula: string | null,
+    studentTurma: string | null
+  ) => Promise<void>; // Aceita null
   handleDeleteTemplate: (templateId: string) => Promise<void>;
   isLoading: boolean;
 };
@@ -44,19 +61,25 @@ export const TemplateProvider = ({ children }: { children: ReactNode }) => {
     setupAndLoadDB();
   }, []);
 
-  const handleAddTemplate = async (title: string, numQuestoes: string, correctAnswers: string[]) => {
+  const handleAddTemplate = async (
+    title: string,
+    numQuestoes: string,
+    correctAnswers: string[],
+    gabaritoImagePath: string | null
+  ) => {
     const newTemplateData: Template = {
       id: Date.now().toString(),
       title: title,
-      date: new Date().toLocaleDateString('pt-BR'),
+      date: new Date().toLocaleDateString("pt-BR"),
       numQuestoes: parseInt(numQuestoes, 10),
       correctAnswers: correctAnswers,
+      gabaritoImagePath: gabaritoImagePath,
       results: [],
     };
     try {
       await db.addTemplateDB(newTemplateData);
       console.log("Template salvo no DB:", newTemplateData.title);
-      setTemplates(prevTemplates => [newTemplateData, ...prevTemplates]);
+      setTemplates((prevTemplates) => [newTemplateData, ...prevTemplates]);
     } catch (err) {
       console.error("Erro ao salvar gabarito no DB:", err);
       throw err;
@@ -64,9 +87,21 @@ export const TemplateProvider = ({ children }: { children: ReactNode }) => {
   };
 
   // Ajustado para aceitar null nos tipos
-  const handleAddReport = async (template: Template, result: { score: string; correct: number; incorrect: number; }, studentName: string, studentMatricula: string | null, studentTurma: string | null) => {
+  const handleAddReport = async (
+    template: Template,
+    result: { score: string; correct: number; incorrect: number },
+    studentName: string,
+    studentMatricula: string | null,
+    studentTurma: string | null
+  ) => {
     try {
-      await db.addReportDB(template.id, result, studentName, studentMatricula, studentTurma);
+      await db.addReportDB(
+        template.id,
+        result,
+        studentName,
+        studentMatricula,
+        studentTurma
+      );
       console.log("Resultado salvo no DB para:", studentName);
       const updatedTemplates = await db.getTemplatesDB();
       setTemplates(updatedTemplates);
@@ -80,7 +115,9 @@ export const TemplateProvider = ({ children }: { children: ReactNode }) => {
     try {
       await db.deleteTemplateDB(templateId);
       console.log("Template deletado do DB via Context:", templateId);
-      setTemplates(prevTemplates => prevTemplates.filter(t => t.id !== templateId));
+      setTemplates((prevTemplates) =>
+        prevTemplates.filter((t) => t.id !== templateId)
+      );
     } catch (err) {
       console.error("Erro ao deletar gabarito no Context:", err);
       throw err;
@@ -88,13 +125,15 @@ export const TemplateProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <TemplateContext.Provider value={{
+    <TemplateContext.Provider
+      value={{
         templates,
         handleAddTemplate,
         handleAddReport,
         handleDeleteTemplate,
-        isLoading
-    }}>
+        isLoading,
+      }}
+    >
       {children}
     </TemplateContext.Provider>
   );

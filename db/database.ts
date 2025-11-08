@@ -20,6 +20,9 @@ export type Template = {
   date: string;
   numQuestoes: number;
   correctAnswers: string[];
+  // Caminho permanente (file://...) da imagem do gabarito salva em FileSystem.documentDirectory
+  // Pode ser null se a geração da imagem falhar ou ainda não ocorrer
+  gabaritoImagePath?: string | null;
   results: ReportResult[]; // Usa o tipo ReportResult definido acima
 };
 // --- FIM DA DEFINIÇÃO DOS TIPOS ---
@@ -38,7 +41,8 @@ export const initDB = async () => {
       title TEXT NOT NULL,
       date TEXT NOT NULL,
       numQuestoes INTEGER NOT NULL,
-      correctAnswers TEXT NOT NULL
+      correctAnswers TEXT NOT NULL,
+      gabaritoImagePath TEXT NULL
     );
     CREATE TABLE IF NOT EXISTS results (
       id TEXT PRIMARY KEY NOT NULL,
@@ -57,13 +61,14 @@ export const initDB = async () => {
 // --- Funções CRUD para Templates (com tipos explícitos) ---
 export const addTemplateDB = async (template: Template) => {
   const res = await db.runAsync(
-    `INSERT INTO templates (id, title, date, numQuestoes, correctAnswers) VALUES ($id, $title, $date, $num, $answers);`,
+    `INSERT INTO templates (id, title, date, numQuestoes, correctAnswers, gabaritoImagePath) VALUES ($id, $title, $date, $num, $answers, $gabaritoImagePath);`,
     {
       $id: template.id,
       $title: template.title,
       $date: template.date,
       $num: template.numQuestoes,
       $answers: JSON.stringify(template.correctAnswers),
+      $gabaritoImagePath: template.gabaritoImagePath || null,
     }
   );
   return res;
@@ -77,11 +82,12 @@ export const getTemplatesDB = async () => {
     date: string;
     numQuestoes: number;
     correctAnswers: string;
+    gabaritoImagePath: string | null;
   };
   type ResultRow = ReportResult;
 
   const templateRows: TemplateRow[] = await db.getAllAsync(
-    "SELECT id, title, date, numQuestoes, correctAnswers FROM templates ORDER BY date DESC;",
+    "SELECT id, title, date, numQuestoes, correctAnswers, gabaritoImagePath FROM templates ORDER BY date DESC;",
     []
   );
 
@@ -97,6 +103,7 @@ export const getTemplatesDB = async () => {
       date: templateRow.date,
       numQuestoes: templateRow.numQuestoes,
       correctAnswers: JSON.parse(templateRow.correctAnswers || "[]"),
+      gabaritoImagePath: templateRow.gabaritoImagePath ?? null,
       results: resultRows ?? [],
     });
   }
