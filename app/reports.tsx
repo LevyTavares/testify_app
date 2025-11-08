@@ -7,6 +7,7 @@ import {
   StatusBar,
   ScrollView,
   Platform,
+  Image,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
@@ -87,6 +88,24 @@ export default function ReportsScreen() {
           <Text style={styles.reportSubtitle}>
             Aluno(a): {reportDetails.studentName}
           </Text>
+          {viewingTemplate.gabaritoImagePath ? (
+            <Image
+              source={{ uri: viewingTemplate.gabaritoImagePath }}
+              style={styles.gabaritoImagePreview}
+              resizeMode="contain"
+            />
+          ) : (
+            <View style={styles.imagePlaceholder}>
+              <MaterialCommunityIcons
+                name="image-off-outline"
+                size={40}
+                color="#AAAAAA"
+              />
+              <Text style={{ color: "#888", marginTop: 8 }}>
+                Prévia não disponível
+              </Text>
+            </View>
+          )}
           <View style={styles.individualStatsContainer}>
             <StatCard
               icon="card-account-details-outline"
@@ -426,5 +445,21 @@ const styles = StyleSheet.create({
 
   individualStatsContainer: {
     marginTop: 10,
+  },
+  gabaritoImagePreview: {
+    width: "100%",
+    height: 240,
+    borderRadius: 12,
+    backgroundColor: "#eee",
+    marginBottom: 20,
+  },
+  imagePlaceholder: {
+    width: "100%",
+    height: 240,
+    borderRadius: 12,
+    backgroundColor: "#f2f2f2",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 20,
   },
 });
