@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import {
   View,
   Text,
-  TextInput,
   TouchableOpacity,
   StyleSheet,
   Image,
@@ -12,6 +11,7 @@ import {
   ActivityIndicator,
   Alert, // <--- Import Alert
 } from "react-native";
+import { TextInput as PaperTextInput } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
@@ -652,37 +652,21 @@ export default function CreateTemplateScreen() {
               </View>
               <Text style={styles.formHeaderTitle}>Detalhes da Avaliação</Text>
             </View>
-            <View style={styles.inputContainer}>
-              <MaterialCommunityIcons
-                name="format-title"
-                size={22}
-                color="#999"
-                style={styles.inputIcon} // Aplicado estilo diretamente aqui
-              />
-              <TextInput
-                style={styles.input}
-                placeholder="Título da Prova"
-                placeholderTextColor="#999"
-                value={tituloProva}
-                onChangeText={setTituloProva}
-              />
-            </View>
-            <View style={styles.inputContainer}>
-              <MaterialCommunityIcons
-                name="pound"
-                size={22}
-                color="#999"
-                style={styles.inputIcon}
-              />
-              <TextInput
-                style={styles.input}
-                placeholder="Número de Questões"
-                placeholderTextColor="#999"
-                value={numQuestoes}
-                onChangeText={setNumQuestoes}
-                keyboardType="numeric"
-              />
-            </View>
+            <PaperTextInput
+              label="Título da Prova"
+              mode="outlined"
+              style={styles.input}
+              value={tituloProva}
+              onChangeText={setTituloProva}
+            />
+            <PaperTextInput
+              label="Número de Questões"
+              mode="outlined"
+              style={styles.input}
+              value={numQuestoes}
+              onChangeText={setNumQuestoes}
+              keyboardType="numeric"
+            />
             <TouchableOpacity
               style={styles.gradientButtonContainer}
               onPress={handleNextStep}
@@ -751,18 +735,11 @@ const styles = StyleSheet.create({
     color: "#333",
     textAlign: "center",
   },
-  inputContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#f7f7f7",
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: "#eee",
-    marginBottom: 20,
-    paddingHorizontal: 15,
+  input: {
+    fontSize: 16,
+    marginBottom: 20, // Adiciona espaço abaixo
+    backgroundColor: "#f7f7f7", // Mantém o fundo
   },
-  inputIcon: { marginRight: 10 },
-  input: { flex: 1, height: 55, fontSize: 16, color: "#333" },
   gradientButtonContainer: {
     borderRadius: 12,
     marginTop: 15,

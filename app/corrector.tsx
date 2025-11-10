@@ -8,10 +8,10 @@ import {
   ScrollView,
   Platform,
   ActivityIndicator,
-  TextInput,
   Alert, // <-- Importa Alert
   KeyboardAvoidingView,
 } from "react-native";
+import { TextInput as PaperTextInput } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -184,66 +184,28 @@ export default function CorrectorScreen() {
                   Erros: {correctionResult.incorrect}
                 </Text>
               </View>
-              <Text style={styles.label}>Nome do Aluno(a)</Text>
-              <View style={styles.inputContainer}>
-                <View style={styles.inputIcon}>
-                  <MaterialCommunityIcons
-                    name="account"
-                    size={22}
-                    color="#999"
-                  />
-                </View>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Digite o nome do aluno"
-                  placeholderTextColor="#999"
-                  value={studentName}
-                  onChangeText={setStudentName}
-                  returnKeyType="next"
-                  onSubmitEditing={() => matriculaRef.current?.focus()}
-                />
-              </View>
-              <Text style={styles.label}>Matrícula (Opcional)</Text>
-              <View style={styles.inputContainer}>
-                <View style={styles.inputIcon}>
-                  <MaterialCommunityIcons
-                    name="card-account-details-outline"
-                    size={22}
-                    color="#999"
-                  />
-                </View>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Digite a matrícula"
-                  placeholderTextColor="#999"
-                  value={studentMatricula}
-                  onChangeText={setStudentMatricula}
-                  keyboardType="numeric"
-                  ref={matriculaRef}
-                  returnKeyType="next"
-                  onSubmitEditing={() => turmaRef.current?.focus()}
-                />
-              </View>
-              <Text style={styles.label}>Turma (Opcional)</Text>
-              <View style={styles.inputContainer}>
-                <View style={styles.inputIcon}>
-                  <MaterialCommunityIcons
-                    name="google-classroom"
-                    size={22}
-                    color="#999"
-                  />
-                </View>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Digite a turma"
-                  placeholderTextColor="#999"
-                  value={studentTurma}
-                  onChangeText={setStudentTurma}
-                  ref={turmaRef}
-                  returnKeyType="done"
-                  onSubmitEditing={handleCorrectNext}
-                />
-              </View>
+              <PaperTextInput
+                label="Nome do Aluno(a)"
+                mode="outlined"
+                style={styles.input}
+                value={studentName}
+                onChangeText={setStudentName}
+              />
+              <PaperTextInput
+                label="Matrícula (Opcional)"
+                mode="outlined"
+                style={styles.input}
+                value={studentMatricula}
+                onChangeText={setStudentMatricula}
+                keyboardType="numeric"
+              />
+              <PaperTextInput
+                label="Turma (Opcional)"
+                mode="outlined"
+                style={styles.input}
+                value={studentTurma}
+                onChangeText={setStudentTurma}
+              />
               <TouchableOpacity
                 style={styles.primaryButton}
                 onPress={handleCorrectNext}
@@ -540,25 +502,11 @@ const styles = StyleSheet.create({
   },
   detailText: { fontSize: 16, color: "#333" },
 
-  label: {
-    fontSize: 15,
-    color: "#666",
-    marginBottom: 8,
-    fontWeight: "500",
-    marginTop: 10,
+  input: {
+    fontSize: 16,
+    marginBottom: 20, // Adiciona espaço abaixo
+    backgroundColor: "#f7f7f7", // Mantém o fundo
   },
-  inputContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#f7f7f7",
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: "#eee",
-    marginBottom: 20,
-    paddingHorizontal: 15,
-  },
-  inputIcon: { marginRight: 10 },
-  input: { flex: 1, height: 55, fontSize: 16, color: "#333" },
 
   primaryButton: {
     width: "100%",
