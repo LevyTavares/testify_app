@@ -278,32 +278,38 @@ export default function ReportsScreen() {
                 style={styles.reportItem}
                 onPress={() => setViewingResult(result)}
                 rippleColor="rgba(0, 0, 0, 0.1)"
-              >
-                <View style={styles.reportItemIcon}>
-                  <MaterialCommunityIcons
-                    name="account-circle-outline"
-                    size={24}
-                    color="#346a74"
-                  />
-                </View>
-                <View style={styles.reportItemTextContainer}>
-                  <PaperText
-                    variant="titleMedium"
-                    style={styles.reportItemTitle}
-                  >
-                    {result.studentName}
-                  </PaperText>
-                  <PaperText variant="bodySmall" style={styles.reportItemDate}>
-                    Nota: {result.score}
-                  </PaperText>
-                </View>
-                <MaterialCommunityIcons
-                  name="chevron-right"
-                  size={24}
-                  color="#ccc"
-                  style={styles.reportItemChevron}
-                />
-              </TouchableRipple>
+                children={
+                  <View style={{ flexDirection: "row", alignItems: "center" }}>
+                    <View style={styles.reportItemIcon}>
+                      <MaterialCommunityIcons
+                        name="account-circle-outline"
+                        size={24}
+                        color="#346a74"
+                      />
+                    </View>
+                    <View style={styles.reportItemTextContainer}>
+                      <PaperText
+                        variant="titleMedium"
+                        style={styles.reportItemTitle}
+                      >
+                        {result.studentName}
+                      </PaperText>
+                      <PaperText
+                        variant="bodySmall"
+                        style={styles.reportItemDate}
+                      >
+                        Nota: {result.score}
+                      </PaperText>
+                    </View>
+                    <MaterialCommunityIcons
+                      name="chevron-right"
+                      size={24}
+                      color="#ccc"
+                      style={styles.reportItemChevron}
+                    />
+                  </View>
+                }
+              />
             ))
           )}
         </ScrollView>
@@ -349,32 +355,38 @@ export default function ReportsScreen() {
                 style={styles.reportItem}
                 onPress={() => setViewingTemplate(template)}
                 rippleColor="rgba(0, 0, 0, 0.1)"
-              >
-                <View style={styles.reportItemIcon}>
-                  <MaterialCommunityIcons
-                    name="file-chart-outline"
-                    size={24}
-                    color="#346a74"
-                  />
-                </View>
-                <View style={styles.reportItemTextContainer}>
-                  <PaperText
-                    variant="titleMedium"
-                    style={styles.reportItemTitle}
-                  >
-                    {template.title}
-                  </PaperText>
-                  <PaperText variant="bodySmall" style={styles.reportItemDate}>
-                    {(template.results || []).length} correções
-                  </PaperText>
-                </View>
-                <MaterialCommunityIcons
-                  name="chevron-right"
-                  size={24}
-                  color="#ccc"
-                  style={styles.reportItemChevron}
-                />
-              </TouchableRipple>
+                children={
+                  <View style={{ flexDirection: "row", alignItems: "center" }}>
+                    <View style={styles.reportItemIcon}>
+                      <MaterialCommunityIcons
+                        name="file-chart-outline"
+                        size={24}
+                        color="#346a74"
+                      />
+                    </View>
+                    <View style={styles.reportItemTextContainer}>
+                      <PaperText
+                        variant="titleMedium"
+                        style={styles.reportItemTitle}
+                      >
+                        {template.title}
+                      </PaperText>
+                      <PaperText
+                        variant="bodySmall"
+                        style={styles.reportItemDate}
+                      >
+                        {(template.results || []).length} correções
+                      </PaperText>
+                    </View>
+                    <MaterialCommunityIcons
+                      name="chevron-right"
+                      size={24}
+                      color="#ccc"
+                      style={styles.reportItemChevron}
+                    />
+                  </View>
+                }
+              />
             ))}
           </>
         )}
