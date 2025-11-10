@@ -203,6 +203,12 @@ export default function ReportsScreen() {
         </View>
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <Text style={styles.welcomeTitle}>{viewingTemplate.title}</Text>
+          {viewingTemplate.gabaritoImagePath && (
+            <Image
+              source={{ uri: viewingTemplate.gabaritoImagePath }}
+              style={styles.gabaritoImagePreview}
+            />
+          )}
           <Text style={styles.sectionTitle}>Desempenho da Turma</Text>
           <View style={styles.statsGrid}>
             <StatCard
@@ -448,9 +454,10 @@ const styles = StyleSheet.create({
   },
   gabaritoImagePreview: {
     width: "100%",
-    height: 240,
-    borderRadius: 12,
-    backgroundColor: "#eee",
+    aspectRatio: 1 / Math.sqrt(2), // Proporção A4
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#ccc",
     marginBottom: 20,
   },
   imagePlaceholder: {
