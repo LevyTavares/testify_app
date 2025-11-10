@@ -217,11 +217,23 @@ export default function ReportsScreen() {
           <PaperText variant="headlineMedium" style={styles.welcomeTitle}>
             {viewingTemplate.title}
           </PaperText>
-          {viewingTemplate.gabaritoImagePath && (
+          {viewingTemplate.gabaritoImagePath ? (
             <Image
               source={{ uri: viewingTemplate.gabaritoImagePath }}
               style={styles.gabaritoImagePreview}
+              resizeMode="contain"
             />
+          ) : (
+            <View style={styles.imagePlaceholder}>
+              <MaterialCommunityIcons
+                name="image-off-outline"
+                size={30}
+                color="#AAAAAA"
+              />
+              <PaperText style={styles.errorText}>
+                Prévia não disponível
+              </PaperText>
+            </View>
           )}
           <PaperText variant="titleLarge" style={styles.sectionTitle}>
             Desempenho da Turma
@@ -492,14 +504,23 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#ccc",
     marginBottom: 20,
+    backgroundColor: "#EEEEEE",
   },
   imagePlaceholder: {
     width: "100%",
-    height: 240,
-    borderRadius: 12,
-    backgroundColor: "#f2f2f2",
-    alignItems: "center",
+    aspectRatio: 1 / Math.sqrt(2),
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#DDDDDD",
+    backgroundColor: "#EEEEEE",
     justifyContent: "center",
+    alignItems: "center",
     marginBottom: 20,
+    padding: 20,
+  },
+  errorText: {
+    marginTop: 10,
+    color: "#888888",
+    textAlign: "center",
   },
 });
