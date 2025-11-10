@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import {
   View,
-  Text,
   TouchableOpacity,
   StyleSheet,
   StatusBar,
@@ -10,6 +9,7 @@ import {
   ActivityIndicator,
   Alert, // <-- Importa Alert
   KeyboardAvoidingView,
+  Text,
 } from "react-native";
 import { TextInput as PaperTextInput } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
