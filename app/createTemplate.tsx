@@ -425,7 +425,7 @@ export default function CreateTemplateScreen() {
           <TouchableRipple
             onPress={() => router.back()}
             style={styles.backButton}
-            rippleColor="rgba(255,255,255,0.2)"
+            rippleColor="rgba(0, 0, 0, 0.1)"
           >
             <MaterialCommunityIcons
               name="arrow-left"
@@ -453,10 +453,10 @@ export default function CreateTemplateScreen() {
                   color="#155724"
                 />
               </View>
-              <PaperText variant="titleLarge" style={styles.formHeaderTitle}>
+              <PaperText variant="headlineSmall" style={styles.formHeaderTitle}>
                 Gabarito Salvo com Sucesso!
               </PaperText>
-              <PaperText style={styles.infoText}>
+              <PaperText variant="bodyMedium" style={styles.infoText}>
                 O gabarito "{tituloProva}" foi salvo localmente. Abaixo está a
                 prévia gerada pelo servidor.
               </PaperText>
@@ -492,12 +492,14 @@ export default function CreateTemplateScreen() {
             {/* --- BOTÃO DE DOWNLOAD MODIFICADO --- */}
             <TouchableRipple
               style={[styles.secondaryButton, { marginTop: 20 }]}
+              rippleColor="rgba(0, 0, 0, 0.1)"
               // Chama a nova função de download
               onPress={handleDownloadImage}
               // Desabilita se não houver imagem ou se estiver carregando
               disabled={!generatedGabaritoUri || isGeneratingImage}
             >
               <PaperText
+                variant="labelLarge"
                 style={[
                   styles.secondaryButtonText,
                   // Adiciona opacidade se desabilitado
@@ -514,10 +516,12 @@ export default function CreateTemplateScreen() {
             {/* Botão de Compartilhar PNG (útil no Expo Go) */}
             <TouchableRipple
               style={styles.secondaryButton}
+              rippleColor="rgba(0, 0, 0, 0.1)"
               onPress={handleShareImage}
               disabled={!generatedGabaritoUri || isGeneratingImage}
             >
               <PaperText
+                variant="labelLarge"
                 style={[
                   styles.secondaryButtonText,
                   (!generatedGabaritoUri || isGeneratingImage) && {
@@ -531,14 +535,22 @@ export default function CreateTemplateScreen() {
 
             <TouchableRipple
               style={styles.secondaryButton}
+              rippleColor="rgba(0, 0, 0, 0.1)"
               onPress={() => router.push("/corrector")}
             >
-              <PaperText style={styles.secondaryButtonText}>
+              <PaperText
+                variant="labelLarge"
+                style={styles.secondaryButtonText}
+              >
                 Ir para Correção
               </PaperText>
             </TouchableRipple>
-            <TouchableRipple style={styles.textButton} onPress={handleReset}>
-              <PaperText style={styles.textButtonText}>
+            <TouchableRipple
+              style={styles.textButton}
+              onPress={handleReset}
+              rippleColor="rgba(0, 0, 0, 0.1)"
+            >
+              <PaperText variant="labelLarge" style={styles.textButtonText}>
                 Criar Novo Gabarito
               </PaperText>
             </TouchableRipple>
@@ -558,7 +570,7 @@ export default function CreateTemplateScreen() {
           <TouchableRipple
             onPress={() => setStep(1)}
             style={styles.backButton}
-            rippleColor="rgba(255,255,255,0.2)"
+            rippleColor="rgba(0, 0, 0, 0.1)"
           >
             <MaterialCommunityIcons
               name="arrow-left"
@@ -572,17 +584,20 @@ export default function CreateTemplateScreen() {
         </View>
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <View style={styles.card}>
-            <PaperText variant="titleLarge" style={styles.formHeaderTitle}>
+            <PaperText variant="headlineSmall" style={styles.formHeaderTitle}>
               Respostas Corretas
             </PaperText>
-            <PaperText style={styles.infoText}>
+            <PaperText variant="bodyMedium" style={styles.infoText}>
               Selecione a alternativa correta para cada questão.
             </PaperText>
             {Object.keys(correctAnswers).map((questionNumberStr) => {
               const questionNumber = parseInt(questionNumberStr, 10);
               return (
                 <View key={questionNumber} style={styles.answerRow}>
-                  <PaperText style={styles.questionNumber}>
+                  <PaperText
+                    variant="titleMedium"
+                    style={styles.questionNumber}
+                  >
                     {questionNumberStr.padStart(2, "0")}.
                   </PaperText>
                   <View style={styles.choicesContainer}>
@@ -594,11 +609,13 @@ export default function CreateTemplateScreen() {
                           correctAnswers[questionNumber] === choice &&
                             styles.choiceButtonSelected,
                         ]}
+                        rippleColor="rgba(0, 0, 0, 0.1)"
                         onPress={() =>
                           handleSelectAnswer(questionNumber, choice)
                         }
                       >
                         <PaperText
+                          variant="titleMedium"
                           style={[
                             styles.choiceButtonText,
                             correctAnswers[questionNumber] === choice &&
@@ -614,14 +631,20 @@ export default function CreateTemplateScreen() {
               );
             })}
             <TouchableRipple
-              style={styles.gradientButtonContainer}
+              style={[
+                styles.gradientButtonContainer,
+                { borderRadius: 12, overflow: "hidden" },
+              ]}
               onPress={handleSaveTemplate}
             >
               <LinearGradient
                 colors={["#a1d5d1", "#5e9c98"]}
                 style={styles.gradientButton}
               >
-                <PaperText style={styles.gradientButtonText}>
+                <PaperText
+                  variant="titleMedium"
+                  style={styles.gradientButtonText}
+                >
                   Salvar Gabarito Completo
                 </PaperText>
               </LinearGradient>
@@ -642,7 +665,7 @@ export default function CreateTemplateScreen() {
           <TouchableRipple
             onPress={() => router.back()}
             style={styles.backButton}
-            rippleColor="rgba(255,255,255,0.2)"
+            rippleColor="rgba(0, 0, 0, 0.1)"
           >
             <MaterialCommunityIcons
               name="arrow-left"
@@ -664,7 +687,7 @@ export default function CreateTemplateScreen() {
                   color="#346a74"
                 />
               </View>
-              <PaperText variant="titleLarge" style={styles.formHeaderTitle}>
+              <PaperText variant="headlineSmall" style={styles.formHeaderTitle}>
                 Detalhes da Avaliação
               </PaperText>
             </View>
@@ -684,14 +707,20 @@ export default function CreateTemplateScreen() {
               keyboardType="numeric"
             />
             <TouchableRipple
-              style={styles.gradientButtonContainer}
+              style={[
+                styles.gradientButtonContainer,
+                { borderRadius: 12, overflow: "hidden" },
+              ]}
               onPress={handleNextStep}
             >
               <LinearGradient
                 colors={["#a1d5d1", "#5e9c98"]}
                 style={styles.gradientButton}
               >
-                <PaperText style={styles.gradientButtonText}>
+                <PaperText
+                  variant="titleMedium"
+                  style={styles.gradientButtonText}
+                >
                   Próximo: Definir Respostas
                 </PaperText>
               </LinearGradient>

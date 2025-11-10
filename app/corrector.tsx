@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import {
   View,
-  TouchableOpacity,
   StyleSheet,
   StatusBar,
   ScrollView,
@@ -9,9 +8,13 @@ import {
   ActivityIndicator,
   Alert, // <-- Importa Alert
   KeyboardAvoidingView,
-  Text,
 } from "react-native";
-import { TextInput as PaperTextInput } from "react-native-paper";
+import {
+  Text as PaperText,
+  TouchableRipple,
+  TextInput as PaperTextInput,
+} from "react-native-paper";
+
 import { SafeAreaView } from "react-native-safe-area-context";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -146,17 +149,20 @@ export default function CorrectorScreen() {
         {/* ... (código JSX do passo 'result' completo) ... */}
         <StatusBar barStyle="light-content" backgroundColor="#346a74" />
         <View style={styles.headerContainer}>
-          <TouchableOpacity
+          <TouchableRipple
             onPress={() => setStep("selectTemplate")}
             style={styles.backButton}
+            rippleColor="rgba(255,255,255,0.2)"
           >
             <MaterialCommunityIcons
               name="arrow-left"
               size={24}
               color="#f0f8f8"
             />
-          </TouchableOpacity>
-          <Text style={styles.headerTitleResult}>Resultado da Correção</Text>
+          </TouchableRipple>
+          <PaperText variant="titleLarge" style={styles.headerTitleResult}>
+            Resultado da Correção
+          </PaperText>
         </View>
         <KeyboardAvoidingView
           style={{ flex: 1 }}
@@ -174,15 +180,17 @@ export default function CorrectorScreen() {
                   size={40}
                   color="#4CAF50"
                 />
-                <Text style={styles.resultScore}>{correctionResult.score}</Text>
+                <PaperText variant="displayMedium" style={styles.resultScore}>
+                  {correctionResult.score}
+                </PaperText>
               </View>
               <View style={styles.resultDetails}>
-                <Text style={styles.detailText}>
+                <PaperText variant="bodyLarge" style={styles.detailText}>
                   Acertos: {correctionResult.correct}
-                </Text>
-                <Text style={styles.detailText}>
+                </PaperText>
+                <PaperText variant="bodyLarge" style={styles.detailText}>
                   Erros: {correctionResult.incorrect}
-                </Text>
+                </PaperText>
               </View>
               <PaperTextInput
                 label="Nome do Aluno(a)"
@@ -206,22 +214,30 @@ export default function CorrectorScreen() {
                 value={studentTurma}
                 onChangeText={setStudentTurma}
               />
-              <TouchableOpacity
+              <TouchableRipple
                 style={styles.primaryButton}
                 onPress={handleCorrectNext}
+                rippleColor="rgba(0, 0, 0, 0.1)"
               >
-                <Text style={styles.primaryButtonText}>
+                <PaperText
+                  variant="titleMedium"
+                  style={styles.primaryButtonText}
+                >
                   Salvar e Corrigir Próxima
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
+                </PaperText>
+              </TouchableRipple>
+              <TouchableRipple
                 style={styles.secondaryButton}
                 onPress={handleFinish}
+                rippleColor="rgba(0, 0, 0, 0.1)"
               >
-                <Text style={styles.secondaryButtonText}>
+                <PaperText
+                  variant="labelLarge"
+                  style={styles.secondaryButtonText}
+                >
                   Salvar e Finalizar Sessão
-                </Text>
-              </TouchableOpacity>
+                </PaperText>
+              </TouchableRipple>
             </View>
           </ScrollView>
         </KeyboardAvoidingView>
@@ -236,18 +252,21 @@ export default function CorrectorScreen() {
         {/* ... (código JSX do passo 'camera' completo) ... */}
         <StatusBar barStyle="light-content" backgroundColor="#000" />
         <View style={styles.cameraOverlay}>
-          <Text style={styles.cameraText}>Alinhe a folha de respostas</Text>
+          <PaperText variant="titleMedium" style={styles.cameraText}>
+            Alinhe a folha de respostas
+          </PaperText>
           <View style={[styles.corner, styles.topLeft]} />
           <View style={[styles.corner, styles.topRight]} />
           <View style={[styles.corner, styles.bottomLeft]} />
           <View style={[styles.corner, styles.bottomRight]} />
         </View>
-        <TouchableOpacity
+        <TouchableRipple
           style={styles.captureButton}
           onPress={() => setStep("processing")}
+          rippleColor="rgba(255,255,255,0.3)"
         >
           <View style={styles.captureButtonInner} />
-        </TouchableOpacity>
+        </TouchableRipple>
       </View>
     );
   }
@@ -259,7 +278,9 @@ export default function CorrectorScreen() {
         {/* ... (código JSX do passo 'processing' completo) ... */}
         <StatusBar barStyle="light-content" backgroundColor="#346a74" />
         <ActivityIndicator size="large" color="#a1d5d1" />
-        <Text style={styles.processingText}>Analisando imagem...</Text>
+        <PaperText variant="titleLarge" style={styles.processingText}>
+          Analisando imagem...
+        </PaperText>
       </View>
     );
   }
@@ -270,13 +291,16 @@ export default function CorrectorScreen() {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#346a74" />
       <View style={styles.headerContainer}>
-        <TouchableOpacity
+        <TouchableRipple
           onPress={() => router.back()}
           style={styles.backButton}
+          rippleColor="rgba(255,255,255,0.2)"
         >
           <MaterialCommunityIcons name="arrow-left" size={24} color="#f0f8f8" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitleResult}>Corrigir Provas</Text>
+        </TouchableRipple>
+        <PaperText variant="titleLarge" style={styles.headerTitleResult}>
+          Corrigir Provas
+        </PaperText>
       </View>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Usa os templates do contexto */}
@@ -290,14 +314,17 @@ export default function CorrectorScreen() {
           />
         ) : (
           <>
-            <Text style={styles.welcomeTitle}>Selecione o Gabarito</Text>
+            <PaperText variant="headlineMedium" style={styles.welcomeTitle}>
+              Selecione o Gabarito
+            </PaperText>
             {/* --- LISTA COM BOTÃO DE DELETAR --- */}
             {templates.map((template) => (
               <View key={template.id} style={styles.reportItemContainer}>
                 {/* Item clicável */}
-                <TouchableOpacity
+                <TouchableRipple
                   style={styles.reportItemTouchable}
                   onPress={() => startCorrection(template)}
+                  rippleColor="rgba(0, 0, 0, 0.1)"
                 >
                   <View style={styles.reportItemIcon}>
                     <MaterialCommunityIcons
@@ -307,12 +334,19 @@ export default function CorrectorScreen() {
                     />
                   </View>
                   <View style={styles.reportItemTextContent}>
-                    <Text style={styles.reportItemTitle} numberOfLines={1}>
+                    <PaperText
+                      variant="titleMedium"
+                      style={styles.reportItemTitle}
+                      numberOfLines={1}
+                    >
                       {template.title}
-                    </Text>
-                    <Text style={styles.reportItemDate}>
+                    </PaperText>
+                    <PaperText
+                      variant="bodySmall"
+                      style={styles.reportItemDate}
+                    >
                       Criado em: {template.date}
-                    </Text>
+                    </PaperText>
                   </View>
                   <MaterialCommunityIcons
                     name="chevron-right"
@@ -320,19 +354,20 @@ export default function CorrectorScreen() {
                     color="#ccc"
                     style={styles.reportItemChevron}
                   />
-                </TouchableOpacity>
+                </TouchableRipple>
 
                 {/* Botão de deletar */}
-                <TouchableOpacity
+                <TouchableRipple
                   style={styles.deleteButton}
                   onPress={() => confirmDelete(template.id, template.title)} // Chama a confirmação
+                  rippleColor="rgba(0, 0, 0, 0.1)"
                 >
                   <MaterialCommunityIcons
                     name="trash-can-outline"
                     size={24}
                     color="#F44336"
                   />
-                </TouchableOpacity>
+                </TouchableRipple>
               </View>
             ))}
             {/* --- FIM DA LISTA --- */}
