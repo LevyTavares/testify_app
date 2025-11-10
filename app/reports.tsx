@@ -1,14 +1,13 @@
 import React, { useState } from "react";
 import {
   View,
-  Text,
-  TouchableOpacity,
   StyleSheet,
   StatusBar,
   ScrollView,
   Platform,
   Image,
 } from "react-native";
+import { TouchableRipple, Text as PaperText } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -53,10 +52,15 @@ export default function ReportsScreen() {
         />
       </View>
       <View style={styles.statTextContainer}>
-        <Text style={[styles.statValue, !fullWidth && { fontWeight: "bold" }]}>
+        <PaperText
+          variant="titleMedium"
+          style={[styles.statValue, !fullWidth && { fontWeight: "bold" }]}
+        >
           {value}
-        </Text>
-        <Text style={styles.statLabel}>{label}</Text>
+        </PaperText>
+        <PaperText variant="bodySmall" style={styles.statLabel}>
+          {label}
+        </PaperText>
       </View>
     </View>
   );
@@ -71,23 +75,28 @@ export default function ReportsScreen() {
       <SafeAreaView style={styles.container}>
         <StatusBar barStyle="light-content" backgroundColor="#346a74" />
         <View style={styles.headerContainer}>
-          <TouchableOpacity
+          <TouchableRipple
             onPress={() => setViewingResult(null)}
             style={styles.backButton}
+            rippleColor="rgba(255,255,255,0.2)"
           >
             <MaterialCommunityIcons
               name="arrow-left"
               size={24}
               color="#f0f8f8"
             />
-          </TouchableOpacity>
-          <Text style={styles.headerTitleResult}>Detalhes da Correção</Text>
+          </TouchableRipple>
+          <PaperText variant="titleLarge" style={styles.headerTitleResult}>
+            Detalhes da Correção
+          </PaperText>
         </View>
         <ScrollView contentContainerStyle={styles.scrollContent}>
-          <Text style={styles.reportTitle}>{viewingTemplate.title}</Text>
-          <Text style={styles.reportSubtitle}>
+          <PaperText variant="headlineMedium" style={styles.reportTitle}>
+            {viewingTemplate.title}
+          </PaperText>
+          <PaperText variant="bodyLarge" style={styles.reportSubtitle}>
             Aluno(a): {reportDetails.studentName}
-          </Text>
+          </PaperText>
           {viewingTemplate.gabaritoImagePath ? (
             <Image
               source={{ uri: viewingTemplate.gabaritoImagePath }}
@@ -101,9 +110,9 @@ export default function ReportsScreen() {
                 size={40}
                 color="#AAAAAA"
               />
-              <Text style={{ color: "#888", marginTop: 8 }}>
+              <PaperText style={{ color: "#888", marginTop: 8 }}>
                 Prévia não disponível
-              </Text>
+              </PaperText>
             </View>
           )}
           <View style={styles.individualStatsContainer}>
@@ -189,27 +198,34 @@ export default function ReportsScreen() {
       <SafeAreaView style={styles.container}>
         <StatusBar barStyle="light-content" backgroundColor="#346a74" />
         <View style={styles.headerContainer}>
-          <TouchableOpacity
+          <TouchableRipple
             onPress={() => setViewingTemplate(null)}
             style={styles.backButton}
+            rippleColor="rgba(255,255,255,0.2)"
           >
             <MaterialCommunityIcons
               name="arrow-left"
               size={24}
               color="#f0f8f8"
             />
-          </TouchableOpacity>
-          <Text style={styles.headerTitleResult}>Resultados da Avaliação</Text>
+          </TouchableRipple>
+          <PaperText variant="titleLarge" style={styles.headerTitleResult}>
+            Resultados da Avaliação
+          </PaperText>
         </View>
         <ScrollView contentContainerStyle={styles.scrollContent}>
-          <Text style={styles.welcomeTitle}>{viewingTemplate.title}</Text>
+          <PaperText variant="headlineMedium" style={styles.welcomeTitle}>
+            {viewingTemplate.title}
+          </PaperText>
           {viewingTemplate.gabaritoImagePath && (
             <Image
               source={{ uri: viewingTemplate.gabaritoImagePath }}
               style={styles.gabaritoImagePreview}
             />
           )}
-          <Text style={styles.sectionTitle}>Desempenho da Turma</Text>
+          <PaperText variant="titleLarge" style={styles.sectionTitle}>
+            Desempenho da Turma
+          </PaperText>
           <View style={styles.statsGrid}>
             <StatCard
               icon="percent-outline"
@@ -234,7 +250,9 @@ export default function ReportsScreen() {
               value={`Questão ${aggregateMetrics.hardestQuestionNumber}`}
             />
           </View>
-          <Text style={styles.sectionTitle}>Resultados Individuais</Text>
+          <PaperText variant="titleLarge" style={styles.sectionTitle}>
+            Resultados Individuais
+          </PaperText>
           {results.length === 0 ? (
             <EmptyState
               icon="account-search-outline"
@@ -243,10 +261,11 @@ export default function ReportsScreen() {
             />
           ) : (
             results.map((result: Template["results"][number]) => (
-              <TouchableOpacity
+              <TouchableRipple
                 key={result.id}
                 style={styles.reportItem}
                 onPress={() => setViewingResult(result)}
+                rippleColor="rgba(0, 0, 0, 0.1)"
               >
                 <View style={styles.reportItemIcon}>
                   <MaterialCommunityIcons
@@ -256,12 +275,15 @@ export default function ReportsScreen() {
                   />
                 </View>
                 <View style={styles.reportItemTextContainer}>
-                  <Text style={styles.reportItemTitle}>
+                  <PaperText
+                    variant="titleMedium"
+                    style={styles.reportItemTitle}
+                  >
                     {result.studentName}
-                  </Text>
-                  <Text style={styles.reportItemDate}>
+                  </PaperText>
+                  <PaperText variant="bodySmall" style={styles.reportItemDate}>
                     Nota: {result.score}
-                  </Text>
+                  </PaperText>
                 </View>
                 <MaterialCommunityIcons
                   name="chevron-right"
@@ -269,7 +291,7 @@ export default function ReportsScreen() {
                   color="#ccc"
                   style={styles.reportItemChevron}
                 />
-              </TouchableOpacity>
+              </TouchableRipple>
             ))
           )}
         </ScrollView>
@@ -281,13 +303,16 @@ export default function ReportsScreen() {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#346a74" />
       <View style={styles.headerContainer}>
-        <TouchableOpacity
+        <TouchableRipple
           onPress={() => router.back()}
           style={styles.backButton}
+          rippleColor="rgba(255,255,255,0.2)"
         >
           <MaterialCommunityIcons name="arrow-left" size={24} color="#f0f8f8" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitleResult}>Relatórios</Text>
+        </TouchableRipple>
+        <PaperText variant="titleLarge" style={styles.headerTitleResult}>
+          Relatórios
+        </PaperText>
       </View>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* 4. VERIFIQUE AQUI!
@@ -303,12 +328,15 @@ export default function ReportsScreen() {
           />
         ) : (
           <>
-            <Text style={styles.welcomeTitle}>Avaliações Corrigidas</Text>
+            <PaperText variant="headlineMedium" style={styles.welcomeTitle}>
+              Avaliações Corrigidas
+            </PaperText>
             {templates.map((template) => (
-              <TouchableOpacity
+              <TouchableRipple
                 key={template.id}
                 style={styles.reportItem}
                 onPress={() => setViewingTemplate(template)}
+                rippleColor="rgba(0, 0, 0, 0.1)"
               >
                 <View style={styles.reportItemIcon}>
                   <MaterialCommunityIcons
@@ -318,10 +346,15 @@ export default function ReportsScreen() {
                   />
                 </View>
                 <View style={styles.reportItemTextContainer}>
-                  <Text style={styles.reportItemTitle}>{template.title}</Text>
-                  <Text style={styles.reportItemDate}>
+                  <PaperText
+                    variant="titleMedium"
+                    style={styles.reportItemTitle}
+                  >
+                    {template.title}
+                  </PaperText>
+                  <PaperText variant="bodySmall" style={styles.reportItemDate}>
                     {(template.results || []).length} correções
-                  </Text>
+                  </PaperText>
                 </View>
                 <MaterialCommunityIcons
                   name="chevron-right"
@@ -329,7 +362,7 @@ export default function ReportsScreen() {
                   color="#ccc"
                   style={styles.reportItemChevron}
                 />
-              </TouchableOpacity>
+              </TouchableRipple>
             ))}
           </>
         )}
