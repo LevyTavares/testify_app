@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   StyleSheet,
@@ -7,7 +7,11 @@ import {
   Platform,
   Image,
 } from "react-native";
-import { TouchableRipple, Text as PaperText } from "react-native-paper";
+import {
+  TouchableRipple,
+  Text as PaperText,
+  ActivityIndicator,
+} from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -27,6 +31,58 @@ export default function ReportsScreen() {
   // Estados locais (copiados)
   const [viewingTemplate, setViewingTemplate] = useState<Template | null>(null);
   const [viewingResult, setViewingResult] = useState<any | null>(null); // Usamos 'any' por enquanto
+  const [gabaritoPreenchido, setGabaritoPreenchido] = useState<string | null>(
+    null
+  );
+  const [loadingImagem, setLoadingImagem] = useState(false);
+
+  // Busca imagem preenchida da API quando um template é selecionado
+  useEffect(() => {
+    const fetchGabaritoPreenchido = async () => {
+      if (!viewingTemplate) {
+        setGabaritoPreenchido(null);
+        return;
+      }
+
+      setLoadingImagem(true);
+      try {
+        // Monta o array de respostas no formato esperado pela API
+        const respostasArray = (viewingTemplate.correctAnswers || []).map(
+          (r) => r
+        );
+
+        const response = await fetch(
+          "http://192.168.0.8:8000/generate_gabarito",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              tituloProva: viewingTemplate.title,
+              numQuestoes: viewingTemplate.numQuestoes,
+              respostas: respostasArray, // Envia as respostas para preencher
+            }),
+          }
+        );
+
+        if (!response.ok)
+          throw new Error("Falha ao buscar gabarito preenchido");
+
+        const blob = await response.blob();
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setGabaritoPreenchido(reader.result as string);
+        };
+        reader.readAsDataURL(blob);
+      } catch (error) {
+        console.error(error);
+        setGabaritoPreenchido(null);
+      } finally {
+        setLoadingImagem(false);
+      }
+    };
+
+    fetchGabaritoPreenchido();
+  }, [viewingTemplate]);
 
   // Componente StatCard (copiado)
   type StatCardProps = {
@@ -217,9 +273,16 @@ export default function ReportsScreen() {
           <PaperText variant="headlineMedium" style={styles.welcomeTitle}>
             {viewingTemplate.title}
           </PaperText>
-          {viewingTemplate.gabaritoImagePath ? (
+          {loadingImagem ? (
+            <View style={styles.imagePlaceholder}>
+              <ActivityIndicator size="large" />
+              <PaperText style={styles.errorText}>
+                Carregando gabarito preenchido...
+              </PaperText>
+            </View>
+          ) : gabaritoPreenchido ? (
             <Image
-              source={{ uri: viewingTemplate.gabaritoImagePath }}
+              source={{ uri: gabaritoPreenchido }}
               style={styles.gabaritoImagePreview}
               resizeMode="contain"
             />
@@ -231,7 +294,7 @@ export default function ReportsScreen() {
                 color="#AAAAAA"
               />
               <PaperText style={styles.errorText}>
-                Prévia não disponível
+                Não foi possível carregar a prévia
               </PaperText>
             </View>
           )}
