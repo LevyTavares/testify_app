@@ -166,7 +166,7 @@ export default function CorrectorScreen() {
         </View>
         <KeyboardAvoidingView
           style={{ flex: 1 }}
-          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
           keyboardVerticalOffset={Platform.OS === "android" ? 80 : 0}
         >
           <ScrollView

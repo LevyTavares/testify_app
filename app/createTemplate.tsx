@@ -8,6 +8,7 @@ import {
   Platform,
   ActivityIndicator,
   Alert, // <--- Import Alert
+  KeyboardAvoidingView,
 } from "react-native";
 import { TouchableRipple, Text as PaperText } from "react-native-paper";
 import { TextInput as PaperTextInput } from "react-native-paper";
@@ -677,56 +678,64 @@ export default function CreateTemplateScreen() {
             Criar Gabarito
           </PaperText>
         </View>
-        <ScrollView contentContainerStyle={styles.scrollContent}>
-          <View style={styles.card}>
-            <View style={styles.formHeader}>
-              <View style={styles.formHeaderIconContainer}>
-                <MaterialCommunityIcons
-                  name="file-document-plus-outline"
-                  size={32}
-                  color="#346a74"
-                />
-              </View>
-              <PaperText variant="headlineSmall" style={styles.formHeaderTitle}>
-                Detalhes da Avaliação
-              </PaperText>
-            </View>
-            <PaperTextInput
-              label="Título da Prova"
-              mode="outlined"
-              style={styles.input}
-              value={tituloProva}
-              onChangeText={setTituloProva}
-            />
-            <PaperTextInput
-              label="Número de Questões"
-              mode="outlined"
-              style={styles.input}
-              value={numQuestoes}
-              onChangeText={setNumQuestoes}
-              keyboardType="numeric"
-            />
-            <TouchableRipple
-              style={[
-                styles.gradientButtonContainer,
-                { borderRadius: 12, overflow: "hidden" },
-              ]}
-              onPress={handleNextStep}
-            >
-              <LinearGradient
-                colors={["#a1d5d1", "#5e9c98"]}
-                style={styles.gradientButton}
-              >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={{ flex: 1 }}
+        >
+          <ScrollView contentContainerStyle={styles.scrollContent}>
+            <View style={styles.card}>
+              <View style={styles.formHeader}>
+                <View style={styles.formHeaderIconContainer}>
+                  <MaterialCommunityIcons
+                    name="file-document-plus-outline"
+                    size={32}
+                    color="#346a74"
+                  />
+                </View>
                 <PaperText
-                  variant="titleMedium"
-                  style={styles.gradientButtonText}
+                  variant="headlineSmall"
+                  style={styles.formHeaderTitle}
                 >
-                  Próximo: Definir Respostas
+                  Detalhes da Avaliação
                 </PaperText>
-              </LinearGradient>
-            </TouchableRipple>
-          </View>
-        </ScrollView>
+              </View>
+              <PaperTextInput
+                label="Título da Prova"
+                mode="outlined"
+                style={styles.input}
+                value={tituloProva}
+                onChangeText={setTituloProva}
+              />
+              <PaperTextInput
+                label="Número de Questões"
+                mode="outlined"
+                style={styles.input}
+                value={numQuestoes}
+                onChangeText={setNumQuestoes}
+                keyboardType="numeric"
+              />
+              <TouchableRipple
+                style={[
+                  styles.gradientButtonContainer,
+                  { borderRadius: 12, overflow: "hidden" },
+                ]}
+                onPress={handleNextStep}
+              >
+                <LinearGradient
+                  colors={["#a1d5d1", "#5e9c98"]}
+                  style={styles.gradientButton}
+                >
+                  <PaperText
+                    variant="titleMedium"
+                    style={styles.gradientButtonText}
+                  >
+                    Próximo: Definir Respostas
+                  </PaperText>
+                </LinearGradient>
+              </TouchableRipple>
+            </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
       </SafeAreaView>
     );
   }
