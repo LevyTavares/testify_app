@@ -325,36 +325,45 @@ export default function CorrectorScreen() {
                   style={styles.reportItemTouchable}
                   onPress={() => startCorrection(template)}
                   rippleColor="rgba(0, 0, 0, 0.1)"
-                >
-                  <View style={styles.reportItemIcon}>
-                    <MaterialCommunityIcons
-                      name="file-document-outline"
-                      size={24}
-                      color="#346a74"
-                    />
-                  </View>
-                  <View style={styles.reportItemTextContent}>
-                    <PaperText
-                      variant="titleMedium"
-                      style={styles.reportItemTitle}
-                      numberOfLines={1}
+                  children={
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        width: "100%",
+                      }}
                     >
-                      {template.title}
-                    </PaperText>
-                    <PaperText
-                      variant="bodySmall"
-                      style={styles.reportItemDate}
-                    >
-                      Criado em: {template.date}
-                    </PaperText>
-                  </View>
-                  <MaterialCommunityIcons
-                    name="chevron-right"
-                    size={24}
-                    color="#ccc"
-                    style={styles.reportItemChevron}
-                  />
-                </TouchableRipple>
+                      <View style={styles.reportItemIcon}>
+                        <MaterialCommunityIcons
+                          name="file-document-outline"
+                          size={24}
+                          color="#346a74"
+                        />
+                      </View>
+                      <View style={styles.reportItemTextContent}>
+                        <PaperText
+                          variant="titleMedium"
+                          style={styles.reportItemTitle}
+                          numberOfLines={1}
+                        >
+                          {template.title}
+                        </PaperText>
+                        <PaperText
+                          variant="bodySmall"
+                          style={styles.reportItemDate}
+                        >
+                          Criado em: {template.date}
+                        </PaperText>
+                      </View>
+                      <MaterialCommunityIcons
+                        name="chevron-right"
+                        size={24}
+                        color="#ccc"
+                        style={styles.reportItemChevron}
+                      />
+                    </View>
+                  }
+                />
 
                 {/* Botão de deletar */}
                 <TouchableRipple
