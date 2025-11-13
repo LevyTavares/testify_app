@@ -25,7 +25,7 @@ import type { Template } from "../db/database";
 // Usar API legacy para evitar warnings e garantir EncodingType/Base64
 import * as FileSystem from "expo-file-system/legacy";
 import * as MediaLibrary from "expo-media-library";
-import * as Sharing from "expo-sharing";
+// Removido import estático de expo-sharing (uso apenas via import dinâmico em fallback)
 // ----------------------------
 
 // Constantes copiadas do original
@@ -50,8 +50,11 @@ export default function CreateTemplateScreen() {
 
   // --- FUNÇÕES ---
 
+  /**
+   * @description Avança do passo 1 para o passo 2 após validar título e número de questões.
+   * Inicializa o objeto de respostas corretas com valores nulos.
+   */
   const handleNextStep = () => {
-    // ... (código idêntico)
     if (!tituloProva || !numQuestoes || parseInt(numQuestoes, 10) <= 0) {
       alert("Por favor, preencha todos os campos com valores válidos.");
       return;
@@ -64,16 +67,22 @@ export default function CreateTemplateScreen() {
     setStep(2);
   };
 
+  /**
+   * @description Registra a alternativa selecionada para uma questão específica.
+   * @param questionNumber Número da questão (1-indexado).
+   * @param answer Alternativa escolhida (A, B, C, D ou E).
+   */
   const handleSelectAnswer = (questionNumber: number, answer: string) => {
-    // ... (código idêntico)
     setCorrectAnswers((prevAnswers) => ({
       ...prevAnswers,
       [questionNumber]: answer,
     }));
   };
 
+  /**
+   * @description Reinicia o fluxo de criação de gabarito limpando todos os estados locais.
+   */
   const handleReset = () => {
-    // ... (código idêntico)
     setTituloProva("");
     setNumQuestoes("");
     setCorrectAnswers({});
@@ -82,8 +91,12 @@ export default function CreateTemplateScreen() {
     setStep(1);
   };
 
+  /**
+   * @description Valida respostas, prepara array ordenado, altera UI para estado de geração,
+   * solicita ao backend a criação da imagem (gabarito em branco) e persiste no SQLite.
+   * Em caso de erro, registra logs e mantém consistência de estado.
+   */
   const handleSaveTemplate = async () => {
-    // ... (código idêntico para validação, salvar no DB e chamar o backend)
     const allAnswered = Object.values(correctAnswers).every(
       (ans) => ans !== null
     );
@@ -203,7 +216,11 @@ export default function CreateTemplateScreen() {
     }
   };
 
-  // --- NOVA FUNÇÃO DE DOWNLOAD ---
+  /**
+   * @description Realiza o fluxo de download/salvamento da imagem do gabarito.
+   * Tenta salvar na galeria (MediaLibrary) e organiza em álbum; se indisponível, tenta fallback de compartilhamento.
+   * Aceita tanto URI file:// quanto data URL base64.
+   */
   const handleDownloadImage = async () => {
     if (!generatedGabaritoUri) {
       Alert.alert(
@@ -337,9 +354,10 @@ export default function CreateTemplateScreen() {
       Alert.alert("Erro", "Não foi possível salvar a imagem na galeria.");
     }
   };
-  // --- FIM DA FUNÇÃO DE DOWNLOAD ---
-
-  // --- BOTÃO/FLUXO DE COMPARTILHAMENTO ---
+  /**
+   * @description Compartilha a imagem do gabarito em outros aplicativos caso o recurso esteja disponível.
+   * Usa import dinâmico de expo-sharing para reduzir overhead quando não utilizado.
+   */
   const handleShareImage = async () => {
     if (!generatedGabaritoUri) {
       Alert.alert("Erro", "Nenhuma imagem para compartilhar.");
@@ -413,11 +431,13 @@ export default function CreateTemplateScreen() {
       Alert.alert("Erro", "Não foi possível compartilhar a imagem.");
     }
   };
-  // --- FIM DO FLUXO DE COMPARTILHAMENTO ---
+  // Fim fluxo de compartilhamento
 
   // --- RENDERIZAÇÃO (JSX) ---
 
-  // --- PASSO 3: GABARITO SALVO ---
+  /**
+   * @description Renderiza o passo 3 (confirmação de salvamento e prévia do gabarito gerado).
+   */
   if (step === 3) {
     return (
       <SafeAreaView style={styles.container}>
@@ -490,7 +510,7 @@ export default function CreateTemplateScreen() {
               </View>
             )}
 
-            {/* --- BOTÃO DE DOWNLOAD MODIFICADO --- */}
+            {/* Botão de download da imagem gerada */}
             <TouchableRipple
               style={[styles.secondaryButton, { marginTop: 20 }]}
               rippleColor="rgba(0, 0, 0, 0.1)"
@@ -512,27 +532,7 @@ export default function CreateTemplateScreen() {
                 Baixar Gabarito (PNG)
               </PaperText>
             </TouchableRipple>
-            {/* --- FIM DA MODIFICAÇÃO DO BOTÃO --- */}
-
-            {/* Botão de Compartilhar PNG (útil no Expo Go) */}
-            <TouchableRipple
-              style={styles.secondaryButton}
-              rippleColor="rgba(0, 0, 0, 0.1)"
-              onPress={handleShareImage}
-              disabled={!generatedGabaritoUri || isGeneratingImage}
-            >
-              <PaperText
-                variant="labelLarge"
-                style={[
-                  styles.secondaryButtonText,
-                  (!generatedGabaritoUri || isGeneratingImage) && {
-                    opacity: 0.5,
-                  },
-                ]}
-              >
-                Compartilhar PNG
-              </PaperText>
-            </TouchableRipple>
+            {/* Botão de compartilhamento removido conforme solicitação */}
 
             <TouchableRipple
               style={styles.secondaryButton}
@@ -561,8 +561,9 @@ export default function CreateTemplateScreen() {
     );
   }
 
-  // --- PASSO 2: DEFINIR RESPOSTAS ---
-  // (JSX idêntico)
+  /**
+   * @description Renderiza o passo 2 para seleção das respostas corretas.
+   */
   if (step === 2) {
     return (
       <SafeAreaView style={styles.container}>
@@ -656,8 +657,9 @@ export default function CreateTemplateScreen() {
     );
   }
 
-  // --- PASSO 1: DETALHES (Default) ---
-  // (JSX idêntico)
+  /**
+   * @description Renderiza o passo 1 (formulário de detalhes da avaliação).
+   */
   if (step === 1) {
     return (
       <SafeAreaView style={styles.container}>
