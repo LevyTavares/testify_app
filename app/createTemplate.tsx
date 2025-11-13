@@ -117,6 +117,7 @@ export default function CreateTemplateScreen() {
         body: JSON.stringify({
           tituloProva: tituloProva,
           numQuestoes: parseInt(numQuestoes, 10),
+          respostas: answersArray, // envia array ordenado para preencher gabarito
         }),
       });
 
