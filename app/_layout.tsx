@@ -1,10 +1,24 @@
-import { Stack } from 'expo-router';
-import { TemplateProvider, useTemplates } from '../context/TemplateContext';
-import React, { useState, useEffect } from 'react';
-import SplashScreen from '../components/SplashScreen'; //
-import { ActivityIndicator, View, StyleSheet } from 'react-native';
-// --- ADICIONE ESTA IMPORTAÇÃO ---
-import { PaperProvider } from 'react-native-paper';
+import { Stack } from "expo-router";
+import { TemplateProvider, useTemplates } from "../context/TemplateContext";
+import React, { useState, useEffect } from "react";
+import SplashScreen from "../components/SplashScreen"; //
+import { ActivityIndicator, View, StyleSheet } from "react-native";
+import {
+  PaperProvider,
+  MD3LightTheme as DefaultTheme,
+} from "react-native-paper";
+
+// Tema global do react-native-paper para ajustar a paleta do app
+const theme = {
+  ...DefaultTheme,
+  colors: {
+    ...DefaultTheme.colors,
+    primary: "#346a74",
+    text: "#333333",
+    placeholder: "#555555",
+    onSurfaceVariant: "#555555",
+  },
+};
 
 // Esta função interna lida com o carregamento do DB
 function AppLayout() {
@@ -46,7 +60,7 @@ export default function RootLayout() {
   // 2. Se o timer acabou, mostre o app principal
   return (
     // --- ENVOLVA COM O PAPERPROVIDER ---
-    <PaperProvider>
+    <PaperProvider theme={theme}>
       <TemplateProvider>
         <AppLayout />
       </TemplateProvider>
@@ -59,8 +73,8 @@ export default function RootLayout() {
 const styles = StyleSheet.create({
   loadingContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#f0f8f8',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#f0f8f8",
   },
 });
