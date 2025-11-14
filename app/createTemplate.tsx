@@ -111,9 +111,7 @@ export default function CreateTemplateScreen() {
 
     setIsGeneratingImage(true);
     setGeneratedGabaritoUri(null);
-    setStep(3);
 
-    let savedFileUri: string | null = null;
     try {
       const backendUrl = "http://192.168.0.8:8000/generate_gabarito"; // SEU IP
 
@@ -136,82 +134,48 @@ export default function CreateTemplateScreen() {
       console.log("Resposta do backend recebida. Status:", response.status);
 
       if (!response.ok) {
-        let errorBody = "Erro desconhecido do servidor.";
+        throw new Error("Falha ao gerar gabarito no servidor");
+      }
+
+      // 1. Header com caminho do mapa JSON
+      const mapPath = response.headers.get("X-Map-Path");
+
+      // 2. Blob PNG do corpo
+      const blob = await response.blob();
+
+      // 3. Converte para base64 (data URL)
+      const reader = new FileReader();
+      reader.onloadend = async () => {
         try {
-          const errorJson = await response.json();
-          errorBody = errorJson.detail || JSON.stringify(errorJson);
-        } catch (e) {
-          /* Ignora */
+          const base64data = reader.result as string;
+
+          // 4. Salva no banco com nova assinatura (inclui mapPath)
+          await handleAddTemplate(
+            tituloProva,
+            parseInt(numQuestoes, 10),
+            answersArray,
+            base64data,
+            mapPath || ""
+          );
+
+          // 5. Atualiza estado para prévia e avança fluxo
+          setGeneratedGabaritoUri(base64data);
+          setStep(3);
+        } catch (err) {
+          console.error("Erro ao salvar template no DB local:", err);
+          Alert.alert(
+            "Erro",
+            "Não foi possível salvar o template no banco de dados."
+          );
+        } finally {
+          setIsGeneratingImage(false);
         }
-        throw new Error(`Erro do servidor (${response.status}): ${errorBody}`);
-      }
-
-      // Em alguns ambientes (Android/Expo), response.blob() pode vir sem o MIME correto
-      // e gerar "application/octet-stream" no data URL. Vamos converter e normalizar depois.
-      const imageBlob = await response.blob();
-      console.log("Blob de imagem recebido do backend:", imageBlob);
-      console.log("Tipo do blob:", (imageBlob as any).type);
-      console.log("Tamanho do blob (bytes):", imageBlob.size);
-
-      // Converte Blob para data URL (base64)
-      const blobToDataURL = (blob: Blob) =>
-        new Promise<string>((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onloadend = () => resolve(reader.result as string);
-          reader.onerror = (err) => reject(err);
-          reader.readAsDataURL(blob);
-        });
-
-      let base64data = await blobToDataURL(imageBlob);
-      // Normaliza para PNG caso o polyfill tenha usado application/octet-stream
-      if (base64data.startsWith("data:application/octet-stream;base64,")) {
-        base64data = base64data.replace(
-          "data:application/octet-stream;base64,",
-          "data:image/png;base64,"
-        );
-      }
-      console.log("Base64 gerado (início):", base64data.substring(0, 50));
-
-      // Usa a variável com nome explícito e extrai exatamente após 'data:image/png;base64,'
-      const imageBase64Data = base64data;
-      let base64Code = imageBase64Data.split("data:image/png;base64,")[1];
-      if (!base64Code) {
-        // fallback seguro caso algum ambiente traga outro mime mas mantenha 'base64,'
-        base64Code = imageBase64Data.split("base64,")[1];
-      }
-      if (!base64Code) {
-        throw new Error("Formato de imagem base64 inválido.");
-      }
-      const filename = `gabarito_img_${Date.now()}.png`;
-      const fileUri = (FileSystem.documentDirectory as string) + filename;
-      await FileSystem.writeAsStringAsync(fileUri, base64Code, {
-        encoding: FileSystem.EncodingType.Base64,
-      });
-      // Atualiza UI para usar o arquivo local permanente
-      setGeneratedGabaritoUri(fileUri);
-      savedFileUri = fileUri;
+      };
+      reader.readAsDataURL(blob);
     } catch (error) {
       console.error("Erro ao gerar imagem do gabarito:", error);
       alert(`Erro ao conectar com o servidor para gerar a imagem: ${error}`);
       setGeneratedGabaritoUri(null);
-      savedFileUri = null;
-    } finally {
-      // Salva o template no SQLite, com o caminho permanente (ou null em caso de erro)
-      try {
-        await handleAddTemplate(
-          tituloProva,
-          numQuestoes,
-          answersArray,
-          savedFileUri
-        );
-        console.log(
-          "Template salvo no DB local com caminho da imagem:",
-          savedFileUri
-        );
-      } catch (err) {
-        console.error("Erro ao salvar template no DB local:", err);
-        // Mantém a navegação, mas informa problema de persistência
-      }
       setIsGeneratingImage(false);
     }
   };

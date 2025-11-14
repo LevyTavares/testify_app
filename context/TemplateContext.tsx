@@ -22,9 +22,10 @@ type TemplateContextType = {
   templates: Template[];
   handleAddTemplate: (
     title: string,
-    numQuestoes: string,
+    numQuestoes: number,
     correctAnswers: string[],
-    gabaritoImagePath: string | null
+    gabaritoImagePath: string | null,
+    mapPath: string
   ) => Promise<void>;
   handleAddReport: (
     template: Template,
@@ -63,17 +64,19 @@ export const TemplateProvider = ({ children }: { children: ReactNode }) => {
 
   const handleAddTemplate = async (
     title: string,
-    numQuestoes: string,
+    numQuestoes: number,
     correctAnswers: string[],
-    gabaritoImagePath: string | null
+    gabaritoImagePath: string | null,
+    mapPath: string
   ) => {
     const newTemplateData: Template = {
       id: Date.now().toString(),
       title: title,
       date: new Date().toLocaleDateString("pt-BR"),
-      numQuestoes: parseInt(numQuestoes, 10),
+      numQuestoes: numQuestoes,
       correctAnswers: correctAnswers,
       gabaritoImagePath: gabaritoImagePath,
+      mapPath: mapPath,
       results: [],
     };
     try {

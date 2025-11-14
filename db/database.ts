@@ -23,6 +23,8 @@ export type Template = {
   // Caminho permanente (file://...) da imagem do gabarito salva em FileSystem.documentDirectory
   // Pode ser null se a geração da imagem falhar ou ainda não ocorrer
   gabaritoImagePath?: string | null;
+  // Caminho do JSON de mapa de posições gerado pelo backend
+  mapPath: string;
   results: ReportResult[]; // Usa o tipo ReportResult definido acima
 };
 // --- FIM DA DEFINIÇÃO DOS TIPOS ---
@@ -42,7 +44,8 @@ export const initDB = async () => {
       date TEXT NOT NULL,
       numQuestoes INTEGER NOT NULL,
       correctAnswers TEXT NOT NULL,
-      gabaritoImagePath TEXT NULL
+      gabaritoImagePath TEXT NULL,
+      mapPath TEXT NOT NULL DEFAULT ''
     );
     CREATE TABLE IF NOT EXISTS results (
       id TEXT PRIMARY KEY NOT NULL,
@@ -69,6 +72,17 @@ export const initDB = async () => {
       );
       console.log("Coluna gabaritoImagePath adicionada via migração.");
     }
+
+    // MIGRAÇÃO: adiciona a coluna mapPath se não existir
+    const hasMapPath = columns.some((c) => c.name === "mapPath");
+    if (!hasMapPath) {
+      await db.execAsync(`ALTER TABLE templates ADD COLUMN mapPath TEXT;`);
+      // Define valor padrão vazio para registros existentes
+      await db.execAsync(
+        `UPDATE templates SET mapPath = '' WHERE mapPath IS NULL;`
+      );
+      console.log("Coluna mapPath adicionada via migração.");
+    }
   } catch (e) {
     console.warn(
       "Não foi possível verificar/adicionar coluna gabaritoImagePath:",
@@ -80,7 +94,7 @@ export const initDB = async () => {
 // --- Funções CRUD para Templates (com tipos explícitos) ---
 export const addTemplateDB = async (template: Template) => {
   const res = await db.runAsync(
-    `INSERT INTO templates (id, title, date, numQuestoes, correctAnswers, gabaritoImagePath) VALUES ($id, $title, $date, $num, $answers, $gabaritoImagePath);`,
+    `INSERT INTO templates (id, title, date, numQuestoes, correctAnswers, gabaritoImagePath, mapPath) VALUES ($id, $title, $date, $num, $answers, $gabaritoImagePath, $mapPath);`,
     {
       $id: template.id,
       $title: template.title,
@@ -88,6 +102,7 @@ export const addTemplateDB = async (template: Template) => {
       $num: template.numQuestoes,
       $answers: JSON.stringify(template.correctAnswers),
       $gabaritoImagePath: template.gabaritoImagePath || null,
+      $mapPath: template.mapPath ?? "",
     }
   );
   return res;
@@ -102,11 +117,12 @@ export const getTemplatesDB = async () => {
     numQuestoes: number;
     correctAnswers: string;
     gabaritoImagePath: string | null;
+    mapPath: string | null;
   };
   type ResultRow = ReportResult;
 
   const templateRows: TemplateRow[] = await db.getAllAsync(
-    "SELECT id, title, date, numQuestoes, correctAnswers, gabaritoImagePath FROM templates ORDER BY date DESC;",
+    "SELECT id, title, date, numQuestoes, correctAnswers, gabaritoImagePath, mapPath FROM templates ORDER BY date DESC;",
     []
   );
 
@@ -123,6 +139,7 @@ export const getTemplatesDB = async () => {
       numQuestoes: templateRow.numQuestoes,
       correctAnswers: JSON.parse(templateRow.correctAnswers || "[]"),
       gabaritoImagePath: templateRow.gabaritoImagePath ?? null,
+      mapPath: templateRow.mapPath ?? "",
       results: resultRows ?? [],
     });
   }
