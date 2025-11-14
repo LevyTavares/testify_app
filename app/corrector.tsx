@@ -13,7 +13,9 @@ import {
   Text as PaperText,
   TouchableRipple,
   TextInput as PaperTextInput,
+  Button,
 } from "react-native-paper";
+import { CameraView, useCameraPermissions } from "expo-camera";
 
 import { SafeAreaView } from "react-native-safe-area-context";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
@@ -23,8 +25,7 @@ import EmptyState from "../components/EmptyState";
 import { useTemplates } from "../context/TemplateContext";
 import type { Template } from "../db/database";
 
-// Dados simulados do resultado (mantido)
-const correctionResult = { score: "9.0 / 10.0", correct: 9, incorrect: 1 };
+// Removido: dados simulados de resultado. Agora usamos o retorno real do backend.
 
 // O Componente
 export default function CorrectorScreen() {
@@ -40,6 +41,14 @@ export default function CorrectorScreen() {
   const [studentName, setStudentName] = useState("");
   const [studentMatricula, setStudentMatricula] = useState("");
   const [studentTurma, setStudentTurma] = useState("");
+
+  // Permissões da câmera
+  const [permission, requestPermission] = useCameraPermissions();
+
+  // Camera ref e estados de upload/resultado
+  const cameraRef = useRef<any>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [correctionResult, setCorrectionResult] = useState<any>(null);
 
   // Efeito do processamento (idêntico, com correção do tipo timer)
   useEffect(() => {
@@ -93,11 +102,23 @@ export default function CorrectorScreen() {
       alert("Por favor, insira pelo menos o nome do aluno.");
       return false;
     }
-    if (selectedTemplate) {
+    if (selectedTemplate && correctionResult) {
       try {
+        // Converte o resultado do backend para o formato do DB
+        const correct = Number(correctionResult?.total_score || 0);
+        const max = Number(
+          correctionResult?.max_score || selectedTemplate.numQuestoes || 0
+        );
+        const incorrect = Math.max(0, max - correct);
+        const resultForDB = {
+          score: `${correct.toFixed(1)} / ${max.toFixed(1)}`,
+          correct,
+          incorrect,
+        };
+
         await handleAddReport(
           selectedTemplate,
-          correctionResult,
+          resultForDB,
           studentName,
           studentMatricula,
           studentTurma
@@ -112,10 +133,7 @@ export default function CorrectorScreen() {
         return false;
       }
     } else {
-      Alert.alert(
-        "Erro",
-        "Nenhum gabarito selecionado para salvar o resultado."
-      );
+      Alert.alert("Erro", "Nenhum resultado para salvar ainda.");
       return false;
     }
   };
@@ -133,6 +151,59 @@ export default function CorrectorScreen() {
     const saved = await handleSaveReport();
     if (saved) {
       router.push("/reports");
+    }
+  };
+
+  // Captura a foto e envia ao backend para correção
+  const handleCaptureAndUpload = async () => {
+    if (!cameraRef.current || !selectedTemplate) {
+      console.log("Câmera ou gabarito não selecionado");
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      // 1. Tira a foto
+      const photo = await cameraRef.current.takePictureAsync({ quality: 0.8 });
+      if (!photo) throw new Error("Falha ao tirar foto");
+
+      // 2. Prepara os dados do formulário
+      const formData = new FormData();
+      formData.append("file", {
+        uri: photo.uri,
+        name: "gabarito.jpg",
+        type: "image/jpeg",
+      } as any);
+      formData.append("map_path", selectedTemplate.mapPath);
+      formData.append(
+        "respostas",
+        JSON.stringify(selectedTemplate.correctAnswers || [])
+      );
+
+      // 3. Envia para o backend
+      // !!! LEMBRE-SE DE TROCAR O 'SEU_IP_AQUI' !!!
+      const response = await fetch("http://192.168.0.8:8000/corrigir_prova", {
+        method: "POST",
+        body: formData,
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      if (!response.ok) {
+        const errText = await response.text();
+        throw new Error(`Erro do servidor: ${errText}`);
+      }
+
+      // 4. Salva o resultado e avança
+      const results = await response.json();
+      setCorrectionResult(results);
+      setStep("result");
+    } catch (error: any) {
+      console.error("Erro ao corrigir prova:", error);
+      alert(`Erro ao corrigir: ${error.message || String(error)}`);
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -181,15 +252,22 @@ export default function CorrectorScreen() {
                   color="#4CAF50"
                 />
                 <PaperText variant="displayMedium" style={styles.resultScore}>
-                  {correctionResult.score}
+                  {`${(correctionResult?.total_score ?? 0).toFixed(1)} / ${(
+                    correctionResult?.max_score ?? 0
+                  ).toFixed(1)}`}
                 </PaperText>
               </View>
               <View style={styles.resultDetails}>
                 <PaperText variant="bodyLarge" style={styles.detailText}>
-                  Acertos: {correctionResult.correct}
+                  Acertos: {correctionResult?.total_score ?? 0}
                 </PaperText>
                 <PaperText variant="bodyLarge" style={styles.detailText}>
-                  Erros: {correctionResult.incorrect}
+                  Erros:{" "}
+                  {Math.max(
+                    0,
+                    (correctionResult?.max_score ?? 0) -
+                      (correctionResult?.total_score ?? 0)
+                  )}
                 </PaperText>
               </View>
               <PaperTextInput
@@ -245,28 +323,60 @@ export default function CorrectorScreen() {
     );
   }
 
-  // --- PASSO 'camera' --- (JSX idêntico)
+  // --- PASSO 'camera' --- (integração com expo-camera)
   if (step === "camera") {
-    return (
-      <View style={styles.cameraContainer}>
-        {/* ... (código JSX do passo 'camera' completo) ... */}
-        <StatusBar barStyle="light-content" backgroundColor="#000" />
-        <View style={styles.cameraOverlay}>
-          <PaperText variant="titleMedium" style={styles.cameraText}>
-            Alinhe a folha de respostas
+    // 1. Verifica se as permissões ainda estão carregando
+    if (!permission) {
+      return (
+        <View style={styles.container}>
+          <ActivityIndicator animating={true} size="large" />
+          <PaperText style={{ textAlign: "center", marginTop: 12 }}>
+            Carregando permissões...
           </PaperText>
-          <View style={[styles.corner, styles.topLeft]} />
-          <View style={[styles.corner, styles.topRight]} />
-          <View style={[styles.corner, styles.bottomLeft]} />
-          <View style={[styles.corner, styles.bottomRight]} />
         </View>
-        <TouchableRipple
-          style={styles.captureButton}
-          onPress={() => setStep("processing")}
-          rippleColor="rgba(255,255,255,0.3)"
-        >
-          <View style={styles.captureButtonInner} />
-        </TouchableRipple>
+      );
+    }
+
+    // 2. Verifica se o usuário ainda não deu permissão
+    if (!permission.granted) {
+      return (
+        <View style={styles.container}>
+          <PaperText style={{ textAlign: "center", marginBottom: 20 }}>
+            Precisamos de permissão para usar a câmera.
+          </PaperText>
+          <Button mode="contained" onPress={requestPermission}>
+            Conceder Permissão
+          </Button>
+        </View>
+      );
+    }
+
+    // 3. Se temos permissão, mostra a câmera
+    return (
+      <View style={StyleSheet.absoluteFillObject}>
+        <CameraView
+          style={StyleSheet.absoluteFillObject}
+          facing="back"
+          ref={cameraRef}
+        />
+
+        <View style={styles.cameraButtonContainer}>
+          {isUploading ? (
+            <ActivityIndicator animating={true} color="#FFFFFF" size="large" />
+          ) : (
+            <Button
+              icon="camera"
+              mode="contained"
+              onPress={async () => {
+                // Função inline delega para handleCaptureAndUpload
+                await handleCaptureAndUpload();
+              }}
+              disabled={isUploading}
+            >
+              Tirar Foto e Corrigir
+            </Button>
+          )}
+        </View>
       </View>
     );
   }
@@ -604,5 +714,14 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     // backgroundColor: 'lightblue', // Para debug
+  },
+  // Novo estilo para a área do botão/legenda da câmera
+  cameraButtonContainer: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: 30,
+    backgroundColor: "rgba(0,0,0,0.4)",
   },
 });
