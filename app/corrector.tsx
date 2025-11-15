@@ -14,6 +14,7 @@ import {
   TouchableRipple,
   TextInput as PaperTextInput,
   Button,
+  IconButton,
 } from "react-native-paper";
 import { CameraView, useCameraPermissions } from "expo-camera";
 
@@ -41,6 +42,7 @@ export default function CorrectorScreen() {
   const [studentName, setStudentName] = useState("");
   const [studentMatricula, setStudentMatricula] = useState("");
   const [studentTurma, setStudentTurma] = useState("");
+  const [isFlashOn, setIsFlashOn] = useState(false);
 
   // Permissões da câmera
   const [permission, requestPermission] = useCameraPermissions();
@@ -164,7 +166,7 @@ export default function CorrectorScreen() {
     setIsUploading(true);
     try {
       // 1. Tira a foto
-      const photo = await cameraRef.current.takePictureAsync({ quality: 0.8 });
+      const photo = await cameraRef.current.takePictureAsync({ quality: 1 });
       if (!photo) throw new Error("Falha ao tirar foto");
 
       // 2. Prepara os dados do formulário
@@ -358,7 +360,18 @@ export default function CorrectorScreen() {
           style={StyleSheet.absoluteFillObject}
           facing="back"
           ref={cameraRef}
+          enableTorch={isFlashOn}
         />
+
+        {/* Botão de Flash */}
+        <View style={styles.flashButtonContainer}>
+          <IconButton
+            icon={isFlashOn ? "flash" : "flash-off"}
+            iconColor="#FFFFFF"
+            size={28}
+            onPress={() => setIsFlashOn(!isFlashOn)}
+          />
+        </View>
 
         <View style={styles.cameraButtonContainer}>
           {isUploading ? (
@@ -723,5 +736,12 @@ const styles = StyleSheet.create({
     right: 0,
     padding: 30,
     backgroundColor: "rgba(0,0,0,0.4)",
+  },
+  flashButtonContainer: {
+    position: "absolute",
+    top: 40,
+    right: 20,
+    backgroundColor: "rgba(0,0,0,0.3)",
+    borderRadius: 50,
   },
 });
