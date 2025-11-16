@@ -135,44 +135,32 @@ export default function CreateTemplateScreen() {
       console.log("Resposta do backend recebida. Status:", response.status);
 
       if (!response.ok) {
-        throw new Error("Falha ao gerar gabarito no servidor");
+        const errText = await response.text();
+        throw new Error(`Falha ao gerar gabarito no servidor: ${errText}`);
       }
 
-      // 1. Header com caminho do mapa JSON
-      const mapPath = response.headers.get("X-Map-Path");
+      // 1. Pega o JSON da resposta
+      const data = await response.json();
+      const imageUrl = data.image_path;
+      const mapUrl = data.map_path;
 
-      // 2. Blob PNG do corpo
-      const blob = await response.blob();
+      if (!imageUrl || !mapUrl) {
+        throw new Error("API não retornou os caminhos esperados.");
+      }
 
-      // 3. Converte para base64 (data URL)
-      const reader = new FileReader();
-      reader.onloadend = async () => {
-        try {
-          const base64data = reader.result as string;
+      // 2. Salva TUDO no banco (com os URLs do Cloudinary)
+      await handleAddTemplate(
+        tituloProva,
+        parseInt(numQuestoes, 10),
+        answersArray,
+        imageUrl, // Salva o URL da imagem
+        mapUrl // Salva o URL do mapa
+      );
 
-          // 4. Salva no banco com nova assinatura (inclui mapPath)
-          await handleAddTemplate(
-            tituloProva,
-            parseInt(numQuestoes, 10),
-            answersArray,
-            base64data,
-            mapPath || ""
-          );
-
-          // 5. Atualiza estado para prévia e avança fluxo
-          setGeneratedGabaritoUri(base64data);
-          setStep(3);
-        } catch (err) {
-          console.error("Erro ao salvar template no DB local:", err);
-          Alert.alert(
-            "Erro",
-            "Não foi possível salvar o template no banco de dados."
-          );
-        } finally {
-          setIsGeneratingImage(false);
-        }
-      };
-      reader.readAsDataURL(blob);
+      // 3. Salva o URL da imagem no estado para a prévia (Passo 3)
+      setGeneratedGabaritoUri(imageUrl);
+      setStep(3); // Avança para a tela de "Gabarito Salvo"
+      setIsGeneratingImage(false);
     } catch (error) {
       console.error("Erro ao gerar imagem do gabarito:", error);
       alert(`Erro ao conectar com o servidor para gerar a imagem: ${error}`);
@@ -194,15 +182,17 @@ export default function CreateTemplateScreen() {
       );
       return;
     }
-    // Aceita tanto file:// (já salvo) quanto data URL base64
+    // Aceita file://, data URL base64 ou URL remota https://
     let uriForSave = generatedGabaritoUri;
     const isFileUri = uriForSave.startsWith("file://");
     const isDataUrl = uriForSave.startsWith("data:");
     const hasBase64 = uriForSave.includes(";base64,");
-    if (!isFileUri && (!isDataUrl || !hasBase64)) {
+    const isRemoteUrl =
+      uriForSave.startsWith("http://") || uriForSave.startsWith("https://");
+    if (!isFileUri && !isDataUrl && !isRemoteUrl) {
       Alert.alert(
         "Erro",
-        "Formato de imagem inválido (não é base64 nem file://)"
+        "Formato de imagem inválido (esperado file://, data: ou https://)"
       );
       console.error("URI inválida para salvar:", generatedGabaritoUri);
       return;
@@ -231,19 +221,27 @@ export default function CreateTemplateScreen() {
       let fileUri: string = uriForSave;
       let needsCleanup = false;
       if (!isFileUri) {
-        // 2. Extrai os dados base64 e cria arquivo temporário
-        const base64Index = uriForSave.indexOf("base64,");
-        const base64Code = uriForSave.slice(base64Index + "base64,".length);
         const filename = `gabarito_${
           tituloProva.replace(/[^a-zA-Z0-9_-]/g, "_") || Date.now()
         }.png`;
         fileUri =
           (FileSystem.cacheDirectory || FileSystem.documentDirectory) +
           filename;
-        await FileSystem.writeAsStringAsync(fileUri, base64Code, {
-          encoding: FileSystem.EncodingType.Base64,
-        });
-        console.log("Imagem salva temporariamente em:", fileUri);
+
+        if (isRemoteUrl) {
+          // Baixa a imagem remota para arquivo temporário
+          const res = await FileSystem.downloadAsync(uriForSave, fileUri);
+          fileUri = res.uri;
+          console.log("Imagem baixada para:", fileUri);
+        } else {
+          // Extrai os dados base64 e cria arquivo temporário
+          const base64Index = uriForSave.indexOf("base64,");
+          const base64Code = uriForSave.slice(base64Index + "base64,".length);
+          await FileSystem.writeAsStringAsync(fileUri, base64Code, {
+            encoding: FileSystem.EncodingType.Base64,
+          });
+          console.log("Imagem salva temporariamente em:", fileUri);
+        }
         needsCleanup = true;
       }
 
