@@ -1,10 +1,10 @@
 {
   "expo": {
-    "name": "testify_app",
+    "name": "TestifyApp",
     "slug": "testify_app",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/testify-icon.png",
     "scheme": "testifyapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
