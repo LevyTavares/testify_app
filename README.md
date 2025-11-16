@@ -106,8 +106,8 @@ O app usa `expo-sqlite` para persistir dados locais (ver `db/database.ts`). O SQ
 O back‑end (FastAPI) está na pasta `../testify_backend` e agora retorna URLs do Cloudinary ao gerar gabaritos.
 
 - `POST /generate_gabarito`
-	- Body (JSON): `{ "tituloProva": "Teste", "numQuestoes": 10 }`
-	- Resposta (JSON): `{ "image_path": "https://.../gabarito.png", "map_path": "https://.../map.json" }`
+  - Body (JSON): `{ "tituloProva": "Teste", "numQuestoes": 10 }`
+  - Resposta (JSON): `{ "image_path": "https://.../gabarito.png", "map_path": "https://.../map.json" }`
 
 No front, `app/createTemplate.tsx` foi atualizado:
 
