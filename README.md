@@ -103,7 +103,19 @@ O app usa `expo-sqlite` para persistir dados locais (ver `db/database.ts`). O SQ
 
 ## Integração com o back‑end
 
-O back‑end (FastAPI) está no repositório separado `testify_backend`. Configure a URL do servidor no `.env` via `EXPO_PUBLIC_API_URL` para consumo HTTP.
+O back‑end (FastAPI) está na pasta `../testify_backend` e agora retorna URLs do Cloudinary ao gerar gabaritos.
+
+- `POST /generate_gabarito`
+	- Body (JSON): `{ "tituloProva": "Teste", "numQuestoes": 10 }`
+	- Resposta (JSON): `{ "image_path": "https://.../gabarito.png", "map_path": "https://.../map.json" }`
+
+No front, `app/createTemplate.tsx` foi atualizado:
+
+- O `handleSaveTemplate` usa `response.json()` e lê `image_path` e `map_path` (em vez de `blob()` e header `X-Map-Path`).
+- As URLs são salvas no SQLite via `handleAddTemplate(...)`.
+- A prévia usa diretamente `image_path` (HTTPS), e o botão “Baixar Gabarito (PNG)” agora também baixa a URL remota para arquivo temporário antes de salvar/compartilhar.
+
+Para apontar o app ao backend, configure a URL base no `.env` via `EXPO_PUBLIC_API_URL`.
 
 ## Build para produção
 
@@ -132,6 +144,7 @@ npx expo export --platform web
 - "Device/Emulator não abre": verifique se o emulador está rodando antes de executar `npm run android/ios`.
 - "Porta ocupada": pare processos anteriores do Metro bundler ou use `CTRL+C` e reinicie com `npm run start`.
 - "Variáveis não carregam": garanta o prefixo `EXPO_PUBLIC_` e reinicie o Dev Server.
+- "Baixar imagem não funciona": verifique se a prévia é uma URL HTTPS; o app baixa a imagem do Cloudinary antes de salvar. Caso falhe, confira conectividade e permissões da `expo-media-library`.
 
 ---
 
