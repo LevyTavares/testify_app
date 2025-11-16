@@ -21,6 +21,7 @@ import { CameraView, useCameraPermissions } from "expo-camera";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import { API_BASE_URL } from "../constants/ApiConfig";
 import EmptyState from "../components/EmptyState";
 // Importa o hook do Contexto e o tipo Template do DB
 import { useTemplates } from "../context/TemplateContext";
@@ -184,7 +185,7 @@ export default function CorrectorScreen() {
 
       // 3. Envia para o backend
       // !!! LEMBRE-SE DE TROCAR O 'SEU_IP_AQUI' !!!
-      const response = await fetch("http://192.168.0.8:8000/corrigir_prova", {
+      const response = await fetch(`${API_BASE_URL}/corrigir_prova`, {
         method: "POST",
         body: formData,
         headers: {

@@ -15,6 +15,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import { API_BASE_URL } from "../constants/ApiConfig";
 // 1. Verifique estes imports
 import EmptyState from "../components/EmptyState";
 import { useTemplates } from "../context/TemplateContext";
@@ -51,18 +52,15 @@ export default function ReportsScreen() {
           (r) => r
         );
 
-        const response = await fetch(
-          "http://192.168.0.8:8000/generate_gabarito",
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              tituloProva: viewingTemplate.title,
-              numQuestoes: viewingTemplate.numQuestoes,
-              respostas: respostasArray, // Envia as respostas para preencher
-            }),
-          }
-        );
+        const response = await fetch(`${API_BASE_URL}/generate_gabarito`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            tituloProva: viewingTemplate.title,
+            numQuestoes: viewingTemplate.numQuestoes,
+            respostas: respostasArray, // Envia as respostas para preencher
+          }),
+        });
 
         if (!response.ok)
           throw new Error("Falha ao buscar gabarito preenchido");

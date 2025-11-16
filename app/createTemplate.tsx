@@ -16,6 +16,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
+import { API_BASE_URL } from "../constants/ApiConfig";
 // Importa o hook para usar o "cérebro" (Contexto) e o tipo Template do DB
 import { useTemplates } from "../context/TemplateContext";
 import type { Template } from "../db/database";
@@ -113,7 +114,7 @@ export default function CreateTemplateScreen() {
     setGeneratedGabaritoUri(null);
 
     try {
-      const backendUrl = "http://192.168.0.8:8000/generate_gabarito"; // SEU IP
+      const backendUrl = `${API_BASE_URL}/generate_gabarito`;
 
       console.log(`Chamando backend em ${backendUrl} com dados:`, {
         tituloProva,
