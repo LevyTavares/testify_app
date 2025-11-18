@@ -48,6 +48,7 @@ export default function CreateTemplateScreen() {
     string | null
   >(null);
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   // --- FUNÇÕES ---
 
@@ -98,11 +99,13 @@ export default function CreateTemplateScreen() {
    * Em caso de erro, registra logs e mantém consistência de estado.
    */
   const handleSaveTemplate = async () => {
+    setIsLoading(true);
     const allAnswered = Object.values(correctAnswers).every(
       (ans) => ans !== null
     );
     if (!allAnswered) {
       alert("Por favor, selecione a resposta correta para todas as questões.");
+      setIsLoading(false);
       return;
     }
 
@@ -166,6 +169,8 @@ export default function CreateTemplateScreen() {
       alert(`Erro ao conectar com o servidor para gerar a imagem: ${error}`);
       setGeneratedGabaritoUri(null);
       setIsGeneratingImage(false);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -600,18 +605,32 @@ export default function CreateTemplateScreen() {
                 styles.gradientButtonContainer,
                 { borderRadius: 12, overflow: "hidden" },
               ]}
-              onPress={handleSaveTemplate}
+              onPress={isLoading ? undefined : handleSaveTemplate}
+              disabled={isLoading}
+              rippleColor="rgba(0, 0, 0, 0.1)"
             >
               <LinearGradient
                 colors={["#a1d5d1", "#5e9c98"]}
                 style={styles.gradientButton}
               >
-                <PaperText
-                  variant="titleMedium"
-                  style={styles.gradientButtonText}
-                >
-                  Salvar Gabarito Completo
-                </PaperText>
+                {isLoading ? (
+                  <>
+                    <ActivityIndicator color="#fff" />
+                    <PaperText
+                      variant="titleMedium"
+                      style={styles.gradientButtonText}
+                    >
+                      Gerando...
+                    </PaperText>
+                  </>
+                ) : (
+                  <PaperText
+                    variant="titleMedium"
+                    style={styles.gradientButtonText}
+                  >
+                    Salvar Gabarito Completo
+                  </PaperText>
+                )}
               </LinearGradient>
             </TouchableRipple>
           </View>
