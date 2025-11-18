@@ -86,6 +86,31 @@ export default function HomeScreen() {
         </Link>
         {/* --- FIM DA MUDANÇA --- */}
 
+        {/* Botão Dicas de Uso */}
+        <Link href="/tutorial" asChild>
+          <TouchableRipple
+            style={styles.tipsButton}
+            onPress={() => {}}
+            rippleColor="rgba(0, 0, 0, 0.05)"
+          >
+            <View style={styles.tipsButtonContent}>
+              <MaterialCommunityIcons
+                name="lightbulb-on-outline"
+                size={24}
+                color="#f59f00"
+              />
+              <PaperText variant="labelLarge" style={styles.tipsButtonText}>
+                Dicas de Uso
+              </PaperText>
+              <MaterialCommunityIcons
+                name="chevron-right"
+                size={24}
+                color="#ccc"
+              />
+            </View>
+          </TouchableRipple>
+        </Link>
+
         <PaperText variant="titleMedium" style={styles.sectionTitle}>
           Ações Rápidas
         </PaperText>
@@ -211,6 +236,30 @@ const styles = StyleSheet.create({
   heroButtonSubtext: {
     color: "rgba(255, 255, 255, 0.9)",
     marginTop: 4,
+  },
+  // Botão Dicas de Uso
+  tipsButton: {
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    marginBottom: 25,
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    borderWidth: 1,
+    borderColor: "#f0f0f0",
+  },
+  tipsButtonContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+  },
+  tipsButtonText: {
+    flex: 1,
+    marginLeft: 12,
+    fontWeight: "500",
+    color: "#555",
   },
   // Grid de Ações Rápidas
   actionsGrid: {
