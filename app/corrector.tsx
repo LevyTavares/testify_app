@@ -193,6 +193,16 @@ export default function CorrectorScreen() {
         },
       });
 
+      // Verifica se o status é 422 (erro de processamento - gabarito não detectado)
+      if (response.status === 422) {
+        const errorData = await response.json();
+        Alert.alert(
+          "Não detectado",
+          errorData.detail || "Verifique a iluminação e enquadre os 4 cantos."
+        );
+        return; // Para aqui, não mostra tela vermelha
+      }
+
       if (!response.ok) {
         const errText = await response.text();
         throw new Error(`Erro do servidor: ${errText}`);
