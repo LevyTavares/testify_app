@@ -108,11 +108,11 @@ export default function CorrectorScreen() {
     if (selectedTemplate && correctionResult) {
       try {
         // Converte o resultado do backend para o formato do DB
-        const correct = Number(correctionResult?.total_score || 0);
+        const correct = Number(correctionResult?.acertos || 0);
         const max = Number(
-          correctionResult?.max_score || selectedTemplate.numQuestoes || 0
+          correctionResult?.total || selectedTemplate.numQuestoes || 0
         );
-        const incorrect = Math.max(0, max - correct);
+        const incorrect = Number(correctionResult?.erros || 0);
         const resultForDB = {
           score: `${correct.toFixed(1)} / ${max.toFixed(1)}`,
           correct,
@@ -210,6 +210,7 @@ export default function CorrectorScreen() {
 
       // 4. Salva o resultado e avança
       const results = await response.json();
+      console.log("Resposta do Backend no App:", results);
       setCorrectionResult(results);
       setStep("result");
     } catch (error: any) {
@@ -265,22 +266,18 @@ export default function CorrectorScreen() {
                   color="#4CAF50"
                 />
                 <PaperText variant="displayMedium" style={styles.resultScore}>
-                  {`${(correctionResult?.total_score ?? 0).toFixed(1)} / ${(
-                    correctionResult?.max_score ?? 0
-                  ).toFixed(1)}`}
+                  {`${(correctionResult?.score ?? 0).toFixed(1)}`}
                 </PaperText>
               </View>
               <View style={styles.resultDetails}>
                 <PaperText variant="bodyLarge" style={styles.detailText}>
-                  Acertos: {correctionResult?.total_score ?? 0}
+                  Acertos: {correctionResult?.acertos ?? 0}
                 </PaperText>
                 <PaperText variant="bodyLarge" style={styles.detailText}>
-                  Erros:{" "}
-                  {Math.max(
-                    0,
-                    (correctionResult?.max_score ?? 0) -
-                      (correctionResult?.total_score ?? 0)
-                  )}
+                  Erros: {correctionResult?.erros ?? 0}
+                </PaperText>
+                <PaperText variant="bodyLarge" style={styles.detailText}>
+                  Total: {correctionResult?.total ?? 0}
                 </PaperText>
               </View>
               <PaperTextInput
