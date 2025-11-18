@@ -1,2 +1,2 @@
 export const API_BASE_URL =
-  "http://192.168.0.8:8000";
+  "https://testify-backend-8wl1.onrender.com";
