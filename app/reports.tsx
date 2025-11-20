@@ -62,15 +62,18 @@ export default function ReportsScreen() {
           }),
         });
 
-        if (!response.ok)
-          throw new Error("Falha ao buscar gabarito preenchido");
+        if (!response.ok) {
+          const errText = await response.text();
+          throw new Error(`Falha ao buscar gabarito preenchido: ${errText}`);
+        }
 
-        const blob = await response.blob();
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          setGabaritoPreenchido(reader.result as string);
-        };
-        reader.readAsDataURL(blob);
+        const data = await response.json();
+        console.log("Preview URL recebida:", data);
+        const previewUrl = data?.preview_url;
+        if (!previewUrl) {
+          throw new Error("Resposta da API não contém preview_url");
+        }
+        setGabaritoPreenchido(previewUrl);
       } catch (error) {
         console.error(error);
         setGabaritoPreenchido(null);
